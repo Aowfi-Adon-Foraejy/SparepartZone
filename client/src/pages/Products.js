@@ -9,7 +9,9 @@ import {
   Filter, 
   AlertTriangle,
   Edit,
-  Trash2
+  Trash2,
+  X,
+  TrendingUp
 } from 'lucide-react';
 
 const Products = () => {
@@ -103,116 +105,207 @@ const Products = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
-        <p className="text-gray-600">Manage your inventory and track stock levels</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Products</p>
-              <p className="text-2xl font-semibold text-gray-900">{pagination?.total || 0}</p>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-full">
-              <Package className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
+          <p className="text-gray-600 mt-1">Manage your inventory and track stock levels</p>
         </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
-              <p className="text-2xl font-semibold text-yellow-600">{lowStockData?.lowStockCount || 0}</p>
-            </div>
-            <div className="p-3 bg-yellow-50 rounded-full">
-              <AlertTriangle className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-          </div>
-        </div>
-        
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn btn-primary flex items-center space-x-2"
+          className="btn btn-primary"
         >
           <Plus className="h-4 w-4" />
           Add Product
         </button>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="stat-card stat-card-primary card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Products</p>
+              <p className="text-3xl font-bold text-gray-900">{pagination?.total || 0}</p>
+              <div className="mt-3 flex items-center text-xs text-primary-600">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>12% from last month</span>
+              </div>
+            </div>
+            <div className="p-4 bg-primary-50 rounded-2xl">
+              <Package className="h-8 w-8 text-primary-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-warning card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Low Stock Items</p>
+              <p className="text-3xl font-bold text-warning-600">{lowStockData?.lowStockCount || 0}</p>
+              <div className="mt-3 flex items-center text-xs text-warning-600">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                <span>Requires attention</span>
+              </div>
+            </div>
+            <div className="p-4 bg-warning-50 rounded-2xl">
+              <AlertTriangle className="h-8 w-8 text-warning-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-success card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Active Products</p>
+              <p className="text-3xl font-bold text-success-600">
+                {products?.filter(p => p.isActive).length || 0}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-success-600">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>Live inventory</span>
+              </div>
+            </div>
+            <div className="p-4 bg-success-50 rounded-2xl">
+              <Package className="h-8 w-8 text-success-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-primary card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Categories</p>
+              <p className="text-3xl font-bold text-primary-600">
+                {[...new Set(products?.map(p => p.category))].length || 0}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-primary-600">
+                <Package className="h-3 w-3 mr-1" />
+                <span>Product types</span>
+              </div>
+            </div>
+            <div className="p-4 bg-primary-50 rounded-2xl">
+              <Package className="h-8 w-8 text-primary-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="flex items-center space-x-4 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
+            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 pr-4 py-3 w-full sm:w-80 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          <button className="btn btn-secondary">
+            <Filter className="h-4 w-4" />
+            Filter
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn btn-primary"
+          >
+            <Plus className="h-4 w-4" />
+            Add Product
+          </button>
+        </div>
+      </div>
+
       {/* Products Table */}
-      <div className="card">
+      <div className="table-container">
         <div className="overflow-x-auto">
           <table className="table">
             <thead className="table-header">
               <tr>
-                <th className="table-header-cell">Name</th>
+                <th className="table-header-cell">Product</th>
                 <th className="table-header-cell">SKU</th>
                 <th className="table-header-cell">Brand</th>
                 <th className="table-header-cell">Category</th>
                 <th className="table-header-cell">Stock</th>
                 <th className="table-header-cell">Price</th>
                 <th className="table-header-cell">Status</th>
-                <th className="table-header-cell">Actions</th>
+                <th className="table-header-cell text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="table-body">
               {products?.map((product) => (
-                <tr key={product._id} className="table-row">
-                  <td className="table-cell">{product.name}</td>
-                  <td className="table-cell">{product.sku}</td>
-                  <td className="table-cell">{product.brand}</td>
-                  <td className="table-cell">{product.category}</td>
+                <tr key={product._id} className="table-row group">
                   <td className="table-cell">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      product.stock.current <= product.stock.reorderThreshold 
-                        ? 'bg-red-100 text-red-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {product.stock.current}
-                    </span>
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <Package className="h-5 w-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{product.name}</p>
+                        <p className="text-xs text-gray-500">{product.sku}</p>
+                      </div>
+                    </div>
                   </td>
-                  <td className="table-cell">৳{product.sellingPrice.toLocaleString()}</td>
                   <td className="table-cell">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      product.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    <span className="badge badge-gray">{product.sku}</span>
+                  </td>
+                  <td className="table-cell">{product.brand}</td>
+                  <td className="table-cell">
+                    <span className="badge badge-primary">{product.category}</span>
+                  </td>
+                  <td className="table-cell">
+                    <div className="flex items-center space-x-2">
+                      <span className={`badge ${
+                        product.stock.current <= product.stock.reorderThreshold 
+                          ? 'badge-danger' 
+                          : 'badge-success'
+                      }`}>
+                        {product.stock.current}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        Min: {product.stock.reorderThreshold}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-900">৳{product.sellingPrice.toLocaleString()}</p>
+                      <p className="text-xs text-gray-500">Cost: ৳{product.costPrice?.toLocaleString()}</p>
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <span className={`badge ${
+                      product.isActive ? 'badge-success' : 'badge-gray'
                     }`}>
                       {product.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="table-cell">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <button
                         onClick={() => {
                           setSelectedProduct(product);
                           setShowEditModal(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteProduct(product._id)}
-                        className="text-red-600 hover:text-red-800"
+                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -227,16 +320,19 @@ const Products = () => {
 
       {/* Add Product Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="modal-overlay">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Add New Product</h2>
+            <div className="modal-content animate-bounce-in max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Add New Product</h2>
+                  <p className="text-sm text-gray-600 mt-1">Fill in the product details below</p>
+                </div>
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
                 >
-                  ×
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               
@@ -252,16 +348,19 @@ const Products = () => {
 
       {/* Edit Product Modal */}
       {showEditModal && selectedProduct && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="modal-overlay">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Edit Product</h2>
+            <div className="modal-content animate-bounce-in max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Edit Product</h2>
+                  <p className="text-sm text-gray-600 mt-1">Update the product information</p>
+                </div>
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
                 >
-                  ×
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               

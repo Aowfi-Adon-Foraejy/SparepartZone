@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Package, Eye, EyeOff } from 'lucide-react';
+import { Package, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const Login = () => {
@@ -53,97 +53,105 @@ const Login = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="flex justify-center">
-            <Package className="h-12 w-12 text-primary-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        {/* Logo and Title */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center h-16 w-16 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl shadow-glow mb-6">
+            <Package className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to Spare Parts Zone
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your credentials to access your account
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome to Spare Parts Zone
+          </h1>
+          <p className="text-gray-600">
+            Sign in to manage your inventory and business
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="login" className="block text-sm font-medium text-gray-700">
-                Email or Username
-              </label>
-              <input
-                id="login"
-                name="login"
-                type="text"
-                required
-                value={formData.login}
-                onChange={handleChange}
-                className="mt-1 input"
-                placeholder="Enter your email or username"
-              />
-            </div>
+        {/* Login Form */}
+        <div className="bg-white rounded-2xl shadow-strong border border-gray-100 p-8">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="login" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email or Username
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                  <input
+                    id="login"
+                    name="login"
+                    type="text"
+                    required
+                    value={formData.login}
+                    onChange={handleChange}
+                    className="input pl-12"
+                    placeholder="Enter your email or username"
+                  />
+                </div>
+              </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="input pr-10"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="input pl-12 pr-12"
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span className="ml-2">Signing in...</span>
-                </div>
-              ) : (
-                'Sign in'
-              )}
-            </button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="font-medium text-primary-600 hover:text-primary-500"
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Contact your administrator
-              </Link>
-            </p>
-          </div>
-        </form>
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                    <span className="ml-2">Signing in...</span>
+                  </div>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+            </div>
+
+            <div className="text-center pt-4 border-t border-gray-100">
+              <p className="text-sm text-gray-600">
+                Need access?{' '}
+                <Link
+                  to="/register"
+                  className="font-medium text-primary-600 hover:text-primary-700 hover:underline transition-colors"
+                >
+                  Contact your administrator
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

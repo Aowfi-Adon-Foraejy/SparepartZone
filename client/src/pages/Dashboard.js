@@ -16,34 +16,45 @@ import {
 const StatCard = ({ title, value, icon: Icon, change, changeType, color = 'primary' }) => {
   const colorClasses = {
     primary: 'stat-card-primary',
-    green: 'stat-card-green',
-    yellow: 'stat-card-yellow',
-    red: 'stat-card-red',
+    green: 'stat-card-success',
+    yellow: 'stat-card-warning',
+    red: 'stat-card-danger',
+    blue: 'stat-card-primary',
+  };
+
+  const iconColors = {
+    primary: 'text-primary-600',
+    green: 'text-success-600',
+    yellow: 'text-warning-600',
+    red: 'text-danger-600',
+    blue: 'text-blue-600',
   };
 
   return (
-    <div className={`stat-card ${colorClasses[color]}`}>
+    <div className={`stat-card ${colorClasses[color]} group cursor-pointer card-hover`}>
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-semibold text-gray-900 mt-1">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
+          <p className="text-3xl font-bold text-gray-900 mb-3">
             {typeof value === 'number' ? value.toLocaleString() : value}
           </p>
           {change !== undefined && (
-            <div className={`flex items-center mt-2 text-sm ${
-              changeType === 'increase' ? 'text-green-600' : 'text-red-600'
+            <div className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
+              changeType === 'increase' 
+                ? 'bg-success-50 text-success-700' 
+                : 'bg-danger-50 text-danger-700'
             }`}>
               {changeType === 'increase' ? (
-                <ArrowUpRight className="h-4 w-4 mr-1" />
+                <ArrowUpRight className="h-3 w-3 mr-1" />
               ) : (
-                <ArrowDownRight className="h-4 w-4 mr-1" />
+                <ArrowDownRight className="h-3 w-3 mr-1" />
               )}
               {Math.abs(change)}%
             </div>
           )}
         </div>
-        <div className="p-3 bg-gray-50 rounded-full">
-          <Icon className="h-6 w-6 text-gray-600" />
+        <div className={`p-4 bg-gray-50 rounded-2xl group-hover:bg-gray-100 transition-all duration-200 ${iconColors[color]}`}>
+          <Icon className="h-7 w-7" />
         </div>
       </div>
     </div>
@@ -105,17 +116,26 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Welcome back! Here's what's happening in your business today.</p>
+    <div className="space-y-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-gray-600">Welcome back! Here's what's happening in your business today.</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Last updated</p>
+            <p className="text-xs font-medium text-gray-700">{new Date().toLocaleTimeString()}</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Sales"
-          value={`₦${stats?.totalSales?.toLocaleString() || 0}`}
+          value={`৳${stats?.totalSales?.toLocaleString() || 0}`}
           icon={DollarSign}
           color="green"
           change={15.3}
@@ -123,7 +143,7 @@ const Dashboard = () => {
         />
         <StatCard
           title="Total Purchases"
-          value={`₦${stats?.totalPurchases?.toLocaleString() || 0}`}
+          value={`৳${stats?.totalPurchases?.toLocaleString() || 0}`}
           icon={Truck}
           change={8.1}
           changeType="increase"
@@ -154,13 +174,13 @@ const Dashboard = () => {
         />
         <StatCard
           title="Customer Dues"
-          value={`₦${stats?.totalCustomerDues?.toLocaleString() || 0}`}
+          value={`৳${stats?.totalCustomerDues?.toLocaleString() || 0}`}
           icon={DollarSign}
           color="red"
         />
         <StatCard
           title="Supplier Payables"
-          value={`₦${stats?.totalSupplierPayables?.toLocaleString() || 0}`}
+          value={`৳${stats?.totalSupplierPayables?.toLocaleString() || 0}`}
           icon={DollarSign}
           color="yellow"
         />
@@ -169,45 +189,79 @@ const Dashboard = () => {
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Sales</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-gray-900">Recent Sales</h3>
+            <span className="badge badge-success">Live</span>
+          </div>
           <div className="space-y-3">
             {recentActivity?.recentSales?.length > 0 ? (
-              recentActivity.recentSales.map((sale) => (
-                <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{sale.invoiceNumber}</p>
-                    <p className="text-xs text-gray-500">{sale.customer}</p>
+              recentActivity.recentSales.map((sale, index) => (
+                <div 
+                  key={sale.id} 
+                  className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group animate-slide-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 bg-success-100 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="h-5 w-5 text-success-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{sale.invoiceNumber}</p>
+                      <p className="text-xs text-gray-500">{sale.customer}</p>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">₦{sale.total.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-success-600">৳{sale.total.toLocaleString()}</p>
                     <p className="text-xs text-gray-500">{new Date(sale.date).toLocaleDateString()}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-4">No recent sales</p>
+              <div className="text-center py-8">
+                <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <TrendingDown className="h-6 w-6 text-gray-400" />
+                </div>
+                <p className="text-gray-500">No recent sales</p>
+              </div>
             )}
           </div>
         </div>
 
         <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Purchases</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-gray-900">Recent Purchases</h3>
+            <span className="badge badge-primary">Live</span>
+          </div>
           <div className="space-y-3">
             {recentActivity?.recentPurchases?.length > 0 ? (
-              recentActivity.recentPurchases.map((purchase) => (
-                <div key={purchase.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{purchase.invoiceNumber}</p>
-                    <p className="text-xs text-gray-500">{purchase.supplier}</p>
+              recentActivity.recentPurchases.map((purchase, index) => (
+                <div 
+                  key={purchase.id} 
+                  className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group animate-slide-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <Package className="h-5 w-5 text-primary-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{purchase.invoiceNumber}</p>
+                      <p className="text-xs text-gray-500">{purchase.supplier}</p>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">₦{purchase.total.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-primary-600">৳{purchase.total.toLocaleString()}</p>
                     <p className="text-xs text-gray-500">{new Date(purchase.date).toLocaleDateString()}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-4">No recent purchases</p>
+              <div className="text-center py-8">
+                <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Package className="h-6 w-6 text-gray-400" />
+                </div>
+                <p className="text-gray-500">No recent purchases</p>
+              </div>
             )}
           </div>
         </div>
@@ -215,32 +269,47 @@ const Dashboard = () => {
 
       {/* Financial Summary */}
       <div className="card">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Financial Summary (Last 30 Days)</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-gray-900">Financial Summary (Last 30 Days)</h3>
+          <div className="flex items-center space-x-2">
+            <div className="h-2 w-2 bg-success-500 rounded-full animate-pulse"></div>
+            <span className="text-xs text-gray-500">Live Data</span>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-600">Total Sales</p>
-            <p className="text-2xl font-bold text-green-600 mt-1">
-              ₦{financialSummary?.salesStats?.totalSales?.toLocaleString() || 0}
+          <div className="text-center p-6 bg-gradient-to-br from-success-50 to-success-100/50 rounded-2xl border border-success-200/50">
+            <div className="h-12 w-12 bg-success-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <TrendingUp className="h-6 w-6 text-success-600" />
+            </div>
+            <p className="text-sm font-medium text-success-700 mb-2">Total Sales</p>
+            <p className="text-3xl font-bold text-success-600 mb-2">
+              ৳{financialSummary?.salesStats?.totalSales?.toLocaleString() || 0}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-success-600">
               {financialSummary?.salesStats?.count || 0} transactions
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-600">Total Purchases</p>
-            <p className="text-2xl font-bold text-blue-600 mt-1">
-              ₦{financialSummary?.purchaseStats?.totalPurchases?.toLocaleString() || 0}
+          <div className="text-center p-6 bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-2xl border border-primary-200/50">
+            <div className="h-12 w-12 bg-primary-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Package className="h-6 w-6 text-primary-600" />
+            </div>
+            <p className="text-sm font-medium text-primary-700 mb-2">Total Purchases</p>
+            <p className="text-3xl font-bold text-primary-600 mb-2">
+              ৳{financialSummary?.purchaseStats?.totalPurchases?.toLocaleString() || 0}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-primary-600">
               {financialSummary?.purchaseStats?.count || 0} transactions
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-600">Net Profit</p>
-            <p className="text-2xl font-bold text-primary-600 mt-1">
-              ₦{((financialSummary?.salesStats?.totalSales || 0) - (financialSummary?.purchaseStats?.totalPurchases || 0)).toLocaleString()}
+          <div className="text-center p-6 bg-gradient-to-br from-secondary-50 to-secondary-100/50 rounded-2xl border border-secondary-200/50">
+            <div className="h-12 w-12 bg-secondary-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="h-6 w-6 text-secondary-600" />
+            </div>
+            <p className="text-sm font-medium text-secondary-700 mb-2">Net Profit</p>
+            <p className="text-3xl font-bold text-secondary-600 mb-2">
+              ৳{((financialSummary?.salesStats?.totalSales || 0) - (financialSummary?.purchaseStats?.totalPurchases || 0)).toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-secondary-600">
               Sales - Purchases
             </p>
           </div>
@@ -249,15 +318,22 @@ const Dashboard = () => {
 
       {/* Account Balances */}
       <div className="card">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Account Balances</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-gray-900">Account Balances</h3>
+          <button className="btn btn-ghost btn-sm">View All</button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {financialSummary?.accountBalances?.map((account) => (
-            <div key={account.account} className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-600 capitalize">
+          {financialSummary?.accountBalances?.map((account, index) => (
+            <div 
+              key={account.account} 
+              className="p-4 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl border border-gray-200/50 hover:shadow-medium transition-all duration-200 cursor-pointer animate-slide-up"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <p className="text-sm font-medium text-gray-600 capitalize mb-2">
                 {account.account.replace('_', ' ')}
               </p>
-              <p className="text-xl font-semibold text-gray-900 mt-1">
-                ₦{account.balance.toLocaleString()}
+              <p className="text-2xl font-bold text-gray-900">
+                ৳{account.balance.toLocaleString()}
               </p>
             </div>
           ))}

@@ -14,7 +14,9 @@ import {
   Building,
   AlertTriangle,
   TrendingUp,
-  DollarSign
+  TrendingDown,
+  DollarSign,
+  X
 } from 'lucide-react';
 
 const Suppliers = () => {
@@ -137,16 +139,16 @@ const Suppliers = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Suppliers</h1>
-          <p className="text-gray-600">Manage your suppliers and purchases</p>
+          <h1 className="text-3xl font-bold text-gray-900">Suppliers</h1>
+          <p className="text-gray-600 mt-1">Manage your suppliers and purchases</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn btn-primary flex items-center gap-2"
+          className="btn btn-primary"
         >
           <Plus className="h-4 w-4" />
           Add Supplier
@@ -154,116 +156,191 @@ const Suppliers = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="stat-card stat-card-primary">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="stat-card stat-card-primary card-hover">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Suppliers</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Suppliers</p>
+              <p className="text-3xl font-bold text-gray-900">
                 {suppliersData?.pagination?.total || 0}
               </p>
+              <div className="mt-3 flex items-center text-xs text-primary-600">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>12% from last month</span>
+              </div>
             </div>
-            <div className="p-3 bg-primary-50 rounded-full">
-              <Truck className="h-6 w-6 text-primary-600" />
+            <div className="p-4 bg-primary-50 rounded-2xl">
+              <Truck className="h-8 w-8 text-primary-600" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-red">
+        <div className="stat-card stat-card-danger card-hover">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Overdue Payments</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">
+              <p className="text-sm font-medium text-gray-600 mb-2">Overdue Payments</p>
+              <p className="text-3xl font-bold text-danger-600">
                 {suppliersData?.stats?.overdueCount || 0}
               </p>
+              <div className="mt-3 flex items-center text-xs text-danger-600">
+                <TrendingDown className="h-3 w-3 mr-1" />
+                <span>Requires attention</span>
+              </div>
             </div>
-            <div className="p-3 bg-red-50 rounded-full">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+            <div className="p-4 bg-danger-50 rounded-2xl">
+              <AlertTriangle className="h-8 w-8 text-danger-600" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-yellow">
+        <div className="stat-card stat-card-warning card-hover">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Payables</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Payables</p>
+              <p className="text-3xl font-bold text-warning-600">
                 ৳{(suppliersData?.stats?.totalPayables || 0).toLocaleString()}
               </p>
+              <div className="mt-3 flex items-center text-xs text-warning-600">
+                <DollarSign className="h-3 w-3 mr-1" />
+                <span>All suppliers</span>
+              </div>
             </div>
-            <div className="p-3 bg-yellow-50 rounded-full">
-              <DollarSign className="h-6 w-6 text-yellow-600" />
+            <div className="p-4 bg-warning-50 rounded-2xl">
+              <DollarSign className="h-8 w-8 text-warning-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-success card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Active Suppliers</p>
+              <p className="text-3xl font-bold text-success-600">
+                {suppliersData?.suppliers?.filter(s => s.isActive).length || 0}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-success-600">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>Good relationships</span>
+              </div>
+            </div>
+            <div className="p-4 bg-success-50 rounded-2xl">
+              <Truck className="h-8 w-8 text-success-600" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder="Search suppliers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full"
-          />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="flex items-center space-x-4 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
+            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search suppliers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 pr-4 py-3 w-full sm:w-80 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          <button className="btn btn-secondary">
+            Filter
+          </button>
+          <button className="btn btn-primary">
+            <Plus className="h-4 w-4" />
+            Add Supplier
+          </button>
         </div>
       </div>
 
       {/* Suppliers Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="table-container">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="table">
+            <thead className="table-header">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Supplier
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Purchased
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Outstanding
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="table-header-cell">Supplier</th>
+                <th className="table-header-cell">Contact</th>
+                <th className="table-header-cell">Total Purchased</th>
+                <th className="table-header-cell">Outstanding</th>
+                <th className="table-header-cell">Status</th>
+                <th className="table-header-cell text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="table-body">
               {suppliersData?.suppliers?.map((supplier) => (
-                <tr key={supplier._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{supplier.name}</div>
-                      <div className="text-sm text-gray-500">{supplier.businessInfo?.companyName}</div>
+                <tr key={supplier._id} className="table-row group">
+                  <td className="table-cell">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <Truck className="h-5 w-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{supplier.name}</p>
+                        <p className="text-xs text-gray-500">{supplier.businessInfo?.companyName}</p>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{supplier.phone}</div>
-                    <div className="text-sm text-gray-500">{supplier.email}</div>
+                  <td className="table-cell">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-900">{supplier.phone}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-900">{supplier.email}</span>
+                      </div>
+                    </div>
                   </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ৳{supplier.financials?.totalPurchased?.toLocaleString() || 0}
+                  <td className="table-cell">
+                    <div className="text-left">
+                      <p className="font-semibold text-primary-600">
+                        ৳{(supplier.financials?.totalPurchased || 0).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500">Total purchases</p>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ৳{supplier.financials?.outstandingPayable?.toLocaleString() || 0}
+                  <td className="table-cell">
+                    <div className="text-left">
+                      <p className={`font-semibold ${
+                        (supplier.financials?.outstandingPayable || 0) > 0 ? 'text-warning-600' : 'text-success-600'
+                      }`}>
+                        ৳{(supplier.financials?.outstandingPayable || 0).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500">Outstanding</p>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentStatusColor(
-                      supplier.financials?.outstandingPayable || 0,
-                      supplier.lastPurchaseDate,
-                      supplier.paymentTerms
-                    )}`}>
+                  <td className="table-cell">
+                    <span className={`badge ${
+                      getPaymentStatus(
+                        supplier.financials?.outstandingPayable || 0,
+                        supplier.lastPurchaseDate,
+                        supplier.paymentTerms
+                      ) === 'paid' ? 'badge-success' :
+                      getPaymentStatus(
+                        supplier.financials?.outstandingPayable || 0,
+                        supplier.lastPurchaseDate,
+                        supplier.paymentTerms
+                      ) === 'current' ? 'badge-success' :
+                      getPaymentStatus(
+                        supplier.financials?.outstandingPayable || 0,
+                        supplier.lastPurchaseDate,
+                        supplier.paymentTerms
+                      ) === 'due-soon' ? 'badge-warning' : 'badge-danger'
+                    }`}>
                       {getPaymentStatus(
                         supplier.financials?.outstandingPayable || 0,
                         supplier.lastPurchaseDate,
@@ -271,19 +348,21 @@ const Suppliers = () => {
                       )}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(supplier)}
-                      className="text-primary-600 hover:text-primary-900 mr-3"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(supplier._id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  <td className="table-cell">
+                    <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={() => handleEdit(supplier)}
+                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(supplier._id)}
+                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -293,8 +372,10 @@ const Suppliers = () => {
         
         {suppliersData?.suppliers?.length === 0 && (
           <div className="text-center py-12">
-            <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No suppliers found</p>
+            <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Truck className="h-6 w-6 text-gray-400" />
+            </div>
+            <p className="text-gray-500">No suppliers found</p>
           </div>
         )}
       </div>
@@ -429,18 +510,23 @@ const SupplierForm = ({ onSubmit, onCancel, initialData = {} }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="modal-overlay">
       <div className="flex items-center justify-center min-h-screen px-4">
-        <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="modal-content animate-bounce-in max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {initialData._id ? 'Edit Supplier' : 'Add New Supplier'}
-            </h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {initialData._id ? 'Edit Supplier' : 'Add New Supplier'}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {initialData._id ? 'Update supplier information' : 'Fill in supplier details below'}
+              </p>
+            </div>
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
             >
-              ×
+              <X className="h-5 w-5" />
             </button>
           </div>
 
@@ -693,11 +779,11 @@ const SupplierForm = ({ onSubmit, onCancel, initialData = {} }) => {
             </div>
 
             {/* Form Actions */}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end space-x-4 pt-4">
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="btn btn-secondary"
               >
                 Cancel
               </button>

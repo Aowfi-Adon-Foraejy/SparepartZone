@@ -40,7 +40,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Mobile backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-gray-600 bg-opacity-75 lg:hidden"
+          className="fixed inset-0 z-30 bg-gray-900/20 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}
@@ -48,77 +48,99 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          fixed inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-gray-900 to-gray-800 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 border-r border-gray-700/50
+          ${isOpen ? 'translate-x-0 shadow-strong' : '-translate-x-full'}
         `}
       >
-        <div className="flex items-center justify-between h-16 px-4 bg-gray-800">
-          <div className="flex items-center">
-            <Package className="w-8 h-8 text-primary-400" />
-            <span className="ml-2 text-xl font-semibold text-white">
-              Spare Parts Zone
-            </span>
+        {/* Header */}
+        <div className="flex items-center justify-between h-16 px-6 bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700/50">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <Package className="w-8 h-8 text-primary-400" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-success-500 rounded-full border-2 border-gray-800"></div>
+            </div>
+            <div>
+              <span className="text-xl font-bold text-white">
+                Spare Parts
+              </span>
+              <p className="text-xs text-gray-400">Zone</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden text-gray-400 hover:text-white"
+            className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-all duration-200"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <nav className="mt-8">
-          <div className="px-4 mb-4">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  {user?.profile?.firstName?.[0] || user?.username?.[0]?.toUpperCase()}
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-white">
-                  {user?.profile?.firstName || user?.username}
-                </p>
-                <p className="text-xs text-gray-400 capitalize">
-                  {user?.role}
-                </p>
+        {/* User Profile Section */}
+        <nav className="mt-6">
+          <div className="px-6 mb-6">
+            <div className="bg-gradient-to-r from-primary-600/20 to-secondary-600/20 rounded-2xl p-4 border border-gray-700/50">
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <div className="h-12 w-12 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-xl flex items-center justify-center text-white font-bold shadow-glow">
+                    {user?.profile?.firstName?.[0] || user?.username?.[0]?.toUpperCase()}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-success-500 rounded-full border-2 border-gray-800 flex items-center justify-center">
+                    <div className="h-1.5 w-1.5 bg-white rounded-full"></div>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-white">
+                    {user?.profile?.firstName || user?.username}
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100/10 text-primary-300 border border-primary-400/30">
+                      {user?.role}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-1 px-2">
-            {navigation.map((item) => {
-              const isActive = location.pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`
-                    group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors
-                    ${isActive
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }
-                  `}
-                  onClick={() => onClose()}
-                >
-                  <item.icon
+          {/* Main Navigation */}
+          <div className="px-4 mb-6">
+            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              Main Menu
+            </p>
+            <div className="space-y-1">
+              {navigation.map((item) => {
+                const isActive = location.pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
                     className={`
-                      mr-3 h-5 w-5 transition-colors
-                      ${isActive ? 'text-primary-400' : 'text-gray-400 group-hover:text-gray-300'}
+                      sidebar-item ${isActive ? 'sidebar-item-active' : 'sidebar-item-inactive'}
+                      group
                     `}
-                  />
-                  {item.name}
-                </Link>
-              );
-            })}
+                    onClick={() => onClose()}
+                  >
+                    <item.icon
+                      className={`
+                        h-5 w-5 transition-all duration-200
+                        ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}
+                      `}
+                    />
+                    <span className="font-medium">{item.name}</span>
+                    {isActive && (
+                      <div className="ml-auto h-2 w-2 bg-white rounded-full animate-pulse"></div>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
+          {/* Admin Section */}
           {user?.role === 'admin' && (
-            <div className="mt-6 px-2">
-              <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Admin
-              </div>
+            <div className="px-4">
+              <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                Administration
+              </p>
               <div className="space-y-1">
                 {adminNavigation.map((item) => {
                   const isActive = location.pathname.startsWith(item.href);
@@ -127,21 +149,21 @@ const Sidebar = ({ isOpen, onClose }) => {
                       key={item.name}
                       to={item.href}
                       className={`
-                        group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors
-                        ${isActive
-                          ? 'bg-gray-800 text-white'
-                          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                        }
+                        sidebar-item ${isActive ? 'sidebar-item-active' : 'sidebar-item-inactive'}
+                        group
                       `}
                       onClick={() => onClose()}
                     >
                       <item.icon
                         className={`
-                          mr-3 h-5 w-5 transition-colors
-                          ${isActive ? 'text-primary-400' : 'text-gray-400 group-hover:text-gray-300'}
+                          h-5 w-5 transition-all duration-200
+                          ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}
                         `}
                       />
-                      {item.name}
+                      <span className="font-medium">{item.name}</span>
+                      {isActive && (
+                        <div className="ml-auto h-2 w-2 bg-white rounded-full animate-pulse"></div>
+                      )}
                     </Link>
                   );
                 })}
@@ -150,13 +172,14 @@ const Sidebar = ({ isOpen, onClose }) => {
           )}
         </nav>
 
-        <div className="absolute bottom-0 w-full p-4">
+        {/* Footer */}
+        <div className="absolute bottom-0 w-full p-4 border-t border-gray-700/50">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white transition-colors"
+            className="w-full sidebar-item sidebar-item-inactive group"
           >
-            <LogOut className="mr-3 h-5 w-5" />
-            Logout
+            <LogOut className="h-5 w-5" />
+            <span className="font-medium">Logout</span>
           </button>
         </div>
       </div>

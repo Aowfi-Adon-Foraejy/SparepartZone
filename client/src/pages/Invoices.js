@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { FileText, TrendingUp, AlertTriangle, DollarSign, Plus, Search, Edit, Download } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Plus, Search, Edit, Download, X, Receipt, ShoppingCart } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -278,24 +278,43 @@ const Invoices = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
+          <p className="text-gray-600 mt-1">Manage sales and purchase invoices</p>
+        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="btn btn-primary"
+        >
+          <Plus className="h-4 w-4" />
+          New Invoice
+        </button>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="stat-card stat-card-blue">
+        <div className="stat-card stat-card-primary card-hover">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Invoices</p>
+              <p className="text-3xl font-bold text-gray-900">
                 {currentData?.pagination?.total || 0}
               </p>
+              <div className="mt-3 flex items-center text-xs text-primary-600">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>8% from last month</span>
+              </div>
             </div>
-            <div className="p-3 bg-blue-50 rounded-full">
-              <FileText className="h-6 w-6 text-blue-600" />
+            <div className="p-4 bg-primary-50 rounded-2xl">
+              <FileText className="h-8 w-8 text-primary-600" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-green">
+        <div className="stat-card stat-card-success card-hover">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Paid</p>

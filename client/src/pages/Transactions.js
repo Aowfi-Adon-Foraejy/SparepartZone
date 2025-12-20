@@ -9,7 +9,8 @@ import {
   TrendingDown,
   DollarSign,
   Calendar,
-  Filter
+  Filter,
+  ArrowUpDown
 } from 'lucide-react';
 
 const Transactions = () => {
@@ -72,108 +73,164 @@ const Transactions = () => {
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Transactions</h1>
-        <p className="text-gray-600">View and manage financial transactions</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
+          <p className="text-gray-600 mt-1">View and manage financial transactions</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button className="btn btn-secondary">
+            <Filter className="h-4 w-4" />
+            Filter
+          </button>
+          <button className="btn btn-primary">
+            <Calendar className="h-4 w-4" />
+            Add Transaction
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
       {summaryData && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="stat-card stat-card-success card-hover">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Income</p>
-                <p className="text-2xl font-semibold text-green-600">
+                <p className="text-sm font-medium text-gray-600 mb-2">Total Income</p>
+                <p className="text-3xl font-bold text-success-600">
                   ৳{summaryData.summary?.totalIncome?.toLocaleString() || 0}
                 </p>
+                <div className="mt-3 flex items-center text-xs text-success-600">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  <span>12% from last month</span>
+                </div>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
+              <div className="p-4 bg-success-50 rounded-2xl">
+                <TrendingUp className="h-8 w-8 text-success-600" />
+              </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="stat-card stat-card-danger card-hover">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Expenses</p>
-                <p className="text-2xl font-semibold text-red-600">
+                <p className="text-sm font-medium text-gray-600 mb-2">Total Expenses</p>
+                <p className="text-3xl font-bold text-danger-600">
                   ৳{summaryData.summary?.totalExpense?.toLocaleString() || 0}
                 </p>
+                <div className="mt-3 flex items-center text-xs text-danger-600">
+                  <TrendingDown className="h-3 w-3 mr-1" />
+                  <span>8% from last month</span>
+                </div>
               </div>
-              <TrendingDown className="h-8 w-8 text-red-600" />
+              <div className="p-4 bg-danger-50 rounded-2xl">
+                <TrendingDown className="h-8 w-8 text-danger-600" />
+              </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="stat-card stat-card-primary card-hover">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Net Balance</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm font-medium text-gray-600 mb-2">Net Balance</p>
+                <p className="text-3xl font-bold text-primary-600">
                   ৳{((summaryData.summary?.totalIncome || 0) - (summaryData.summary?.totalExpense || 0)).toLocaleString()}
                 </p>
+                <div className="mt-3 flex items-center text-xs text-primary-600">
+                  <ArrowUpDown className="h-3 w-3 mr-1" />
+                  <span>Cash flow</span>
+                </div>
               </div>
-              <DollarSign className="h-8 w-8 text-gray-600" />
+              <div className="p-4 bg-primary-50 rounded-2xl">
+                <DollarSign className="h-8 w-8 text-primary-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="stat-card stat-card-warning card-hover">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-2">Transactions</p>
+                <p className="text-3xl font-bold text-warning-600">
+                  {transactionsData?.pagination?.total || 0}
+                </p>
+                <div className="mt-3 flex items-center text-xs text-warning-600">
+                  <Receipt className="h-3 w-3 mr-1" />
+                  <span>All time</span>
+                </div>
+              </div>
+              <div className="p-4 bg-warning-50 rounded-2xl">
+                <Receipt className="h-8 w-8 text-warning-600" />
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search transactions..."
-                className="input pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+      <div className="card">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search transactions..."
+              className="input pl-12"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            )}
           </div>
           
-          <select
-            className="input"
-            value={filters.type}
-            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-          >
-            <option value="">All Types</option>
-            <option value="sale">Sales</option>
-            <option value="purchase">Purchases</option>
-            <option value="quick">Quick Sales</option>
-            <option value="payment_received">Payments Received</option>
-            <option value="payment_made">Payments Made</option>
-          </select>
-          
-          <select
-            className="input"
-            value={filters.category}
-            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-          >
-            <option value="">All Categories</option>
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-          </select>
+          <div className="flex items-center space-x-3">
+            <select
+              className="select"
+              value={filters.type}
+              onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+            >
+              <option value="">All Types</option>
+              <option value="sale">Sales</option>
+              <option value="purchase">Purchases</option>
+              <option value="quick">Quick Sales</option>
+              <option value="payment_received">Payments Received</option>
+              <option value="payment_made">Payments Made</option>
+            </select>
+            
+            <select
+              className="select"
+              value={filters.category}
+              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+            >
+              <option value="">All Categories</option>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Transactions List */}
-      <div className="bg-white rounded-lg border border-gray-200">
+      <div className="table-container">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="table">
+            <thead className="table-header">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer/Supplier</th>
+                <th className="table-header-cell">Date</th>
+                <th className="table-header-cell">Type</th>
+                <th className="table-header-cell">Description</th>
+                <th className="table-header-cell">Category</th>
+                <th className="table-header-cell">Amount</th>
+                <th className="table-header-cell">Account</th>
+                <th className="table-header-cell">Customer/Supplier</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">

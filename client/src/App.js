@@ -41,7 +41,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50/50">
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -60,7 +60,7 @@ function App() {
                     onMenuClick={() => setSidebarOpen(!sidebarOpen)}
                   />
                   
-                  <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                  <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50 p-6 animate-fade-in">
                     <Routes>
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/products/*" element={<Products />} />

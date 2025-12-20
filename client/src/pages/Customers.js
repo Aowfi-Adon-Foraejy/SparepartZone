@@ -11,7 +11,10 @@ import {
   Mail,
   Building,
   AlertTriangle,
-  Search
+  Search,
+  TrendingUp,
+  TrendingDown,
+  X
 } from 'lucide-react';
 
 const Customers = () => {
@@ -79,110 +82,210 @@ const Customers = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
-        <p className="text-gray-600">Manage your customers and their billing information</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Customers</p>
-              <p className="text-2xl font-semibold text-gray-900">{pagination?.total || 0}</p>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-full">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
+          <p className="text-gray-600 mt-1">Manage your customers and their billing information</p>
         </div>
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Overdue Accounts</p>
-              <p className="text-2xl font-semibold text-red-600">{customersData?.stats?.totalDues || 0}</p>
-            </div>
-            <div className="p-3 bg-red-50 rounded-full">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search customers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-          </div>
-        </div>
-        
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn btn-primary flex items-center space-x-2"
+          className="btn btn-primary"
         >
           <Plus className="h-4 w-4" />
           Add Customer
         </button>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="stat-card stat-card-primary card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Customers</p>
+              <p className="text-3xl font-bold text-gray-900">{pagination?.total || 0}</p>
+              <div className="mt-3 flex items-center text-xs text-primary-600">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>8% from last month</span>
+              </div>
+            </div>
+            <div className="p-4 bg-primary-50 rounded-2xl">
+              <Users className="h-8 w-8 text-primary-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-danger card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Overdue Accounts</p>
+              <p className="text-3xl font-bold text-danger-600">{customersData?.stats?.totalDues || 0}</p>
+              <div className="mt-3 flex items-center text-xs text-danger-600">
+                <TrendingDown className="h-3 w-3 mr-1" />
+                <span>Requires attention</span>
+              </div>
+            </div>
+            <div className="p-4 bg-danger-50 rounded-2xl">
+              <AlertTriangle className="h-8 w-8 text-danger-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-success card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Active Customers</p>
+              <p className="text-3xl font-bold text-success-600">
+                {customers?.filter(c => c.isActive && !c.isBlacklisted).length || 0}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-success-600">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>Good standing</span>
+              </div>
+            </div>
+            <div className="p-4 bg-success-50 rounded-2xl">
+              <Users className="h-8 w-8 text-success-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-warning card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Business Customers</p>
+              <p className="text-3xl font-bold text-warning-600">
+                {customers?.filter(c => c.type === 'business').length || 0}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-warning-600">
+                <Building className="h-3 w-3 mr-1" />
+                <span>Corporate accounts</span>
+              </div>
+            </div>
+            <div className="p-4 bg-warning-50 rounded-2xl">
+              <Building className="h-8 w-8 text-warning-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="flex items-center space-x-4 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
+            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search customers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 pr-4 py-3 w-full sm:w-80 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          <button className="btn btn-secondary">
+            Filter
+          </button>
+          <button className="btn btn-primary">
+            <Plus className="h-4 w-4" />
+            Add Customer
+          </button>
+        </div>
+      </div>
+
       {/* Customers Table */}
-      <div className="card">
+      <div className="table-container">
         <div className="overflow-x-auto">
           <table className="table">
             <thead className="table-header">
               <tr>
-                <th className="table-header-cell">Name</th>
-                <th className="table-header-cell">Email</th>
-                <th className="table-header-cell">Phone</th>
+                <th className="table-header-cell">Customer</th>
+                <th className="table-header-cell">Contact</th>
                 <th className="table-header-cell">Type</th>
                 <th className="table-header-cell">Outstanding Due</th>
                 <th className="table-header-cell">Status</th>
-                <th className="table-header-cell">Actions</th>
+                <th className="table-header-cell text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="table-body">
               {customers?.map((customer) => (
-                <tr key={customer._id} className="table-row">
-                  <td className="table-cell">{customer.name}</td>
-                  <td className="table-cell">{customer.email}</td>
-                  <td className="table-cell">{customer.phone}</td>
-                  <td className="table-cell">{customer.type}</td>
-                  <td className="table-cell">৳{customer.financials?.outstandingDue || 0}</td>
+                <tr key={customer._id} className="table-row group">
                   <td className="table-cell">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      customer.isBlacklisted ? 'bg-red-100 text-red-800' : 
-                      customer.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <Users className="h-5 w-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{customer.name}</p>
+                        <p className="text-xs text-gray-500">{customer.type}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-900">{customer.email}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-900">{customer.phone}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <span className={`badge ${
+                      customer.type === 'business' ? 'badge-primary' : 
+                      customer.type === 'individual' ? 'badge-success' : 'badge-gray'
                     }`}>
-                      {customer.isBlacklisted ? 'Blacklisted' : 
-                       customer.isActive ? 'Active' : 'Inactive'}
-                    }
+                      {customer.type}
                     </span>
                   </td>
                   <td className="table-cell">
-                    <div className="flex items-center space-x-2">
+                    <div className="text-left">
+                      <p className={`font-semibold ${
+                        (customer.financials?.outstandingDue || 0) > 0 ? 'text-danger-600' : 'text-success-600'
+                      }`}>
+                        ৳{(customer.financials?.outstandingDue || 0).toLocaleString()}
+                      </p>
+                      {customer.creditLimit > 0 && (
+                        <p className="text-xs text-gray-500">Limit: ৳{customer.creditLimit.toLocaleString()}</p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <span className={`badge ${
+                      customer.isBlacklisted ? 'badge-danger' : 
+                      customer.isActive ? 'badge-success' : 'badge-gray'
+                    }`}>
+                      {customer.isBlacklisted ? 'Blacklisted' : 
+                       customer.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="table-cell">
+                    <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <button
                         onClick={() => {
                           setSelectedCustomer(customer);
                           setShowEditModal(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteCustomer(customer._id)}
-                        className="text-red-600 hover:text-red-800"
+                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -197,16 +300,19 @@ const Customers = () => {
 
       {/* Add Customer Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="modal-overlay">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Add New Customer</h2>
+            <div className="modal-content animate-bounce-in max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Add New Customer</h2>
+                  <p className="text-sm text-gray-600 mt-1">Fill in customer details below</p>
+                </div>
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
                 >
-                  ×
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               
@@ -221,16 +327,19 @@ const Customers = () => {
 
       {/* Edit Customer Modal */}
       {showEditModal && selectedCustomer && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="modal-overlay">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Edit Customer</h2>
+            <div className="modal-content animate-bounce-in max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Edit Customer</h2>
+                  <p className="text-sm text-gray-600 mt-1">Update customer information</p>
+                </div>
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
                 >
-                  ×
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               
