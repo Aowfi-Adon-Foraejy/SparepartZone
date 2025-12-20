@@ -1,0 +1,1397 @@
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { 
+  FileText, 
+  Search, 
+  Plus, 
+  Edit, 
+  Trash2,
+  Download,
+  DollarSign,
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown
+} from 'lucide-react';
+
+const Invoices = () => {
+  const [activeTab, setActiveTab] = useState('sales');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [invoiceType, setInvoiceType] = useState('sale');
+  const [showQuickPaymentModal, setShowQuickPaymentModal] = useState(false);
+  
+  const queryClient = useQueryClient();
+  
+  const downloadPDFMutation = useMutation(
+    async (invoiceId) => {
+      const response = await api.get(`/api/invoices/${invoiceId}/pdf`);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-${invoiceId}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    },
+    onSuccess: () => {
+      toast.success('PDF downloaded successfully');
+    },
+    onError: () => {
+      toast.error('Failed to download PDF');
+    }
+  });
+  }
+
+  const handleDownloadPDF = (invoiceId) => {
+    downloadPDFMutation.mutate(invoiceId);
+  };
+
+  const totalPages = currentData?.pagination?.pages || 0;
+  const displayedPages = [];
+
+  // Generate page numbers to display (max 5 pages)
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, currentPage + 2);
+  
+  for (let i = startPage; i <= endPage; i++) {
+    displayedPages.push(i);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="stat-card stat-card-blue">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Invoices</p>
+              <p className="text-2xl font-semibold text-gray-900 mt-1">
+                {currentData?.pagination?.total || 0}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-full">
+              <FileText className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-green">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Paid</p>
+              <p className="text-2xl font-semibold text-gray-900 mt-1">
+                {currentData?.invoices?.filter(inv => inv.paymentStatus === 'fully_paid').length || 0}
+              </p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-full">
+              <TrendingUp className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-yellow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Partially Paid</p>
+              <p className="text-2xl font-semibold text-gray-900 mt-1">
+                {currentData?.invoices?.filter(inv => inv.paymentStatus === 'partially_paid').length || 0}
+              </p>
+            </div>
+            <div className="p-3 bg-yellow-50 rounded-full">
+              <AlertTriangle className="h-6 w-6 text-yellow-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-red">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Overdue</p>
+              <p className="text-2xl font-semibold text-gray-900 mt-1">
+                {overdueData?.overdueInvoices?.length || 0}
+              </p>
+            </div>
+            <div className="p-3 bg-red-50 rounded-full">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Payment Button */}
+      <div className="mb-6">
+        <button
+          onClick={() => setShowQuickPaymentModal(true)}
+          className="btn btn-accent flex items-center gap-2"
+        >
+          <DollarSign className="h-4 w-4" />
+          Quick Payment
+        </button>
+      </div>
+
+      {/* Create Invoice Buttons */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => {
+            setShowCreateModal(true);
+            setInvoiceType('sale');
+          }}
+          className="btn btn-primary flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Sales Invoice
+        </button>
+        <button
+          onClick={() => {
+            setShowCreateModal(true);
+            setInvoiceType('purchase');
+          }}
+          className="btn btn-secondary flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Purchase Invoice
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('sales')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'sales'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Sales Invoices
+          </button>
+          <button
+            onClick={() => setActiveTab('purchases')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'purchases'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Purchase Invoices
+          </button>
+        </nav>
+      </div>
+
+      {/* Search */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1 relative">
+          <input
+            type="text"
+            placeholder="Search invoices..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full"
+          />
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+      {/* Invoices Table */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Invoice
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {activeTab === 'sales' ? 'Customer' : 'Supplier'}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Paid
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Due
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentData?.invoices?.map((invoice) => (
+                <tr key={invoice._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</div>
+                      <div className="text-sm text-gray-500">{invoice.type}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {activeTab === 'sales' ? invoice.customer?.name : invoice.supplier?.name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{new Date(invoice.date).toLocaleDateString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-sm font-medium text-gray-900">৳{invoice.total.toLocaleString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-sm font-medium text-gray-900">৳{invoice.getAmountPaid().toLocaleString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-sm font-medium text-gray-900">৳{invoice.getAmountDue().toLocaleString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(invoice.paymentStatus)}`}>
+                      {invoice.paymentStatus?.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {/* Edit functionality */}}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Edit"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedInvoice(invoice)}
+                        className="text-green-600 hover:text-green-900"
+                        title="Add Payment"
+                      >
+                        <DollarSign className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPDF(invoice._id)}
+                        className="text-gray-600 hover:text-gray-900"
+                        title="Download PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        {currentData?.invoices?.length === 0 && (
+          <div className="text-center py-12">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No {activeTab} invoices found</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-700">
+              Showing {((currentPage - 1) * 10) + 1} to{' '}
+              {Math.min(currentPage * 10, currentData.pagination.total)} of{' '}
+              {currentData.pagination.total} results
+            </div>
+            <div className="flex gap-2">
+              {displayedPages.map(page => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-3 py-1 border ${
+                    page === currentPage
+                      ? 'border-gray-300 bg-gray-100'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  } rounded-md disabled:opacity-50`}
+                  disabled={page === currentPage}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedInvoice && (
+        <PaymentModal
+          invoice={selectedInvoice}
+          onSubmit={async (paymentData) => {
+            try {
+              await api.post(`/api/invoices/${selectedInvoice._id}/payments`, paymentData);
+              toast.success('Payment added successfully');
+              setShowPaymentModal(false);
+              setSelectedInvoice(null);
+              queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'overdue-invoices']);
+            } catch (error) {
+              toast.error(error.response?.data?.message || 'Failed to add payment');
+            }
+          }}
+          onCancel={() => {
+            setShowPaymentModal(false);
+            setSelectedInvoice(null);
+          }}
+        />
+      )}
+
+      {/* Create Sales Invoice Modal */}
+      {showCreateModal && invoiceType === 'sale' && (
+        <SalesInvoiceForm
+          onSubmit={async (invoiceData) => {
+            try {
+              await api.post('/api/invoices/sales', invoiceData);
+              toast.success('Sales invoice created successfully');
+              setShowCreateModal(false);
+              queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'overdue-invoices']);
+              queryClient.refetchQueries(['sales-invoices']);
+            } catch (error) {
+              toast.error(error.response?.data?.message || 'Failed to create sales invoice');
+            }
+          }}
+          onCancel={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {/* Create Purchase Invoice Modal */}
+      {showCreateModal && invoiceType === 'purchase' && (
+        <PurchaseInvoiceForm
+          onSubmit={async (invoiceData) => {
+            try {
+              const supplier = invoiceData.supplier;
+              const purchaseData = {
+                items: invoiceData.items,
+                discount: invoiceData.discount,
+                tax: invoiceData.tax,
+                notes: invoiceData.notes,
+                paymentAmount: invoiceData.paymentAmount,
+                paymentMethod: invoiceData.paymentMethod
+              };
+              await api.post(`/api/suppliers/${supplier}/purchases`, purchaseData);
+              toast.success('Purchase invoice created successfully');
+              setShowCreateModal(false);
+              queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'overdue-invoices']);
+              queryClient.refetchQueries(['purchase-invoices']);
+            } catch (error) {
+              toast.error(error.response?.data?.message || 'Failed to create purchase invoice');
+            }
+          }}
+          onCancel={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {/* Quick Payment Modal */}
+      {showQuickPaymentModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="card max-w-md w-full">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Quick Payment</h2>
+                <button
+                  onClick={() => setShowQuickPaymentModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+
+              <form 
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    await api.post('/api/payments/quick', {
+                      amount: e.target.amount.value,
+                      method: e.target.method.value,
+                      reference: e.target.reference.value,
+                      notes: e.target.notes.value,
+                      type: 'walkin'
+                    });
+                    toast.success('Quick payment recorded successfully');
+                    setShowQuickPaymentModal(false);
+                    queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'overdue-invoices']);
+                  } catch (error) {
+                    toast.error(error.response?.data?.message || 'Failed to record payment');
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Amount *</label>
+                  <input
+                    type="number"
+                    name="amount"
+                    step="0.01"
+                    min="0"
+                    required
+                    className="input"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method *</label>
+                  <select name="method" className="input" required>
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="card">Card</option>
+                    <option value="mobile_money">Mobile Money</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reference</label>
+                  <input
+                    type="text"
+                    name="reference"
+                    className="input"
+                    placeholder="Receipt # or transaction ID"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <textarea
+                    name="notes"
+                    rows={3}
+                    className="input"
+                    placeholder="Payment details or customer information..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickPaymentModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                  >
+                    Record Payment
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Sales Invoice Form Component
+const SalesInvoiceForm = ({ onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    type: 'sale',
+    customer: '',
+    items: [{ product: '', quantity: 1, unitPrice: 0 }],
+    discount: 0,
+    tax: 0,
+    notes: '',
+    paymentAmount: 0,
+    paymentMethod: 'cash'
+  });
+
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    type: 'individual'
+  });
+
+  const { data: customers } = useQuery('customers', async () => {
+    try {
+      const response = await api.get('/api/customers');
+      return response.data?.customers || [];
+    } catch (error) {
+      console.error('Customers API error:', error);
+      return [];
+    }
+  });
+
+  const { data: products } = useQuery('products', async () => {
+    try {
+      const response = await api.get('/api/products');
+      return response.data?.products || [];
+    } catch (error) {
+      console.error('Products API error:', error);
+      return [];
+    }
+  });
+
+  const handleCreateCustomer = async () => {
+    try {
+      const response = await api.post('/api/customers', newCustomer);
+      const createdCustomer = response.data.customer;
+      
+      queryClient.setQueryData('customers', (old: any) => {
+        return Array.isArray(old) ? [...old, createdCustomer] : [createdCustomer];
+      });
+      
+      setFormData(prev => ({ ...prev, customer: createdCustomer._id }));
+      
+      setShowNewCustomerForm(false);
+      setNewCustomer({ name: '', email: '', phone: '', type: 'individual' });
+      
+      toast.success('Customer created successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create customer');
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const subtotal = formData.items.reduce((sum, item) => 
+      sum + ((item.quantity || 0) * (item.unitPrice || 0)), 0
+    );
+    
+    onSubmit({
+      ...formData,
+      items: formData.items.map(item => ({
+        product: item.product,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice
+      })),
+      subtotal,
+      total: subtotal - formData.discount + formData.tax
+    });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    setFormData(prev => {
+      const newItems = prev.items.map((item, i) => {
+        if (i === index) {
+          const updatedItem = { ...item, [field]: value };
+          
+          if (field === 'product' && value) {
+            const product = products?.find(p => p._id === value);
+            if (product) {
+              updatedItem.unitPrice = product.sellingPrice || 0;
+            }
+          }
+          
+          return updatedItem;
+        }
+        return item;
+      });
+      return { ...prev, items: newItems };
+    });
+  };
+
+  const addItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { product: '', quantity: 1, unitPrice: 0 }]
+    }));
+  };
+
+  const removeItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Create Sales Invoice</h2>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+              <div className="space-y-2">
+                <select
+                  name="customer"
+                  value={formData.customer}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                >
+                  <option value="">Select Customer</option>
+                  {Array.isArray(customers) && customers.map(customer => (
+                    <option key={customer._id} value={customer._id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                  <option value="new" onClick={() => setShowNewCustomerForm(true)}>
+                    + Add New Customer
+                  </option>
+                </select>
+              </div>
+
+              {showNewCustomerForm && (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-medium text-gray-900">Add New Customer</h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewCustomerForm(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                      <input
+                        type="text"
+                        value={newCustomer.name}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
+                        className="input"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                      <input
+                        type="tel"
+                        value={newCustomer.phone}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                        className="input"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={newCustomer.email}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
+                        className="input"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                      <select
+                        value={newCustomer.type}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, type: e.target.value }))}
+                        className="input"
+                      >
+                        <option value="individual">Individual</option>
+                        <option value="business">Business</option>
+                        <option value="walk-in">Walk-in</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewCustomerForm(false);
+                        setNewCustomer({ name: '', email: '', phone: '', type: 'individual' });
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateCustomer}
+                      className="btn btn-primary"
+                    >
+                      Add Customer
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Products</h3>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="btn btn-secondary text-sm"
+                >
+                  + Add Product
+                </button>
+              </div>
+
+              {formData.items.map((item, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                      <select
+                        value={item.product}
+                        onChange={(e) => handleItemChange(index, 'product', e.target.value)}
+                        className="input"
+                        required
+                      >
+                        <option value="">Select Product</option>
+                        {Array.isArray(products) && products.map(product => (
+                          <option key={product._id} value={product._id}>
+                            {product.name} - {product.brand} (Stock: {product.stock?.current || 0})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
+                        className="input"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price</label>
+                      <input
+                        type="number"
+                        value={item.unitPrice}
+                        onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))}
+                        className="input"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeItem(index)}
+                    className="text-red-600 hover:text-red-900 text-sm"
+                  >
+                    Remove Product
+                  </button>
+                </div>
+              ))}
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount</label>
+                  <input
+                    type="number"
+                    name="discount"
+                    value={formData.discount}
+                    onChange={handleChange}
+                    className="input"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax</label>
+                  <input
+                    type="number"
+                    name="tax"
+                    value={formData.tax}
+                    onChange={handleChange}
+                    className="input"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Amount</label>
+                  <input
+                    type="number"
+                    name="paymentAmount"
+                    value={formData.paymentAmount}
+                    onChange={handleChange}
+                    className="input"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <select
+                  name="paymentMethod"
+                  value={formData.paymentMethod}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                >
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="card">Card</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="mobile_money">Mobile Money</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  rows={3}
+                  className="input"
+                  placeholder="Additional notes..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                >
+                  Create Invoice
+                </button>
+              </div>
+            </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Purchase Invoice Form Component  
+const PurchaseInvoiceForm = ({ onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    type: 'purchase',
+    supplier: '',
+    items: [{ 
+      isCustom: false, 
+      customName: '', 
+      customBrand: '',
+      customCategory: '',
+      quantity: 1, 
+      unitPrice: 0 
+    }],
+    discount: 0,
+    tax: 0,
+    notes: '',
+    paymentAmount: 0,
+    paymentMethod: 'cash'
+  });
+
+  const { data: suppliers } = useQuery('suppliers', async () => {
+    try {
+      const response = await api.get('/api/suppliers');
+      return response.data?.suppliers || [];
+    } catch (error) {
+      console.error('Suppliers API error:', error);
+      return [];
+    }
+  });
+
+  const { data: products } = useQuery('products', async () => {
+    try {
+      const response = await api.get('/api/products');
+      return response.data?.products || [];
+    } catch (error) {
+      console.error('Products API error:', error);
+      return [];
+    }
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const processedItems = formData.items.map(item => {
+      let itemData;
+      
+      if (item.isCustom) {
+        itemData = {
+          name: item.customName,
+          brand: item.customBrand,
+          category: item.customCategory,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice
+        };
+      } else {
+        itemData = {
+          product: item.product,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice
+        };
+      }
+      
+      return itemData;
+    });
+    
+    const subtotal = formData.items.reduce((sum, item) => 
+      sum + ((item.quantity || 0) * (item.unitPrice || 0)), 0
+    );
+    
+    onSubmit({
+      ...formData,
+      items: processedItems,
+      subtotal,
+      total: subtotal - formData.discount + formData.tax
+    });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    setFormData(prev => {
+      const newItems = prev.items.map((item, i) => {
+        if (i === index) {
+          const updatedItem = { ...item, [field]: value };
+          
+          if (field === 'product' && value) {
+            const product = products?.find(p => p._id === value);
+            if (product) {
+              updatedItem.unitPrice = product.costPrice || 0;
+              updatedItem.isCustom = false;
+            }
+          }
+          
+          return updatedItem;
+        }
+        return item;
+      });
+      return { ...prev, items: newItems };
+    });
+  };
+
+  const addItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { 
+        isCustom: false, 
+        customName: '', 
+        customBrand: '',
+        customCategory: '',
+        quantity: 1, 
+        unitPrice: 0 
+      }]
+    }));
+  };
+
+  const removeItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="card max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Create Purchase Invoice</h2>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+              <select
+                name="supplier"
+                value={formData.supplier}
+                onChange={handleChange}
+                className="input"
+                required
+              >
+                <option value="">Select Supplier</option>
+                {Array.isArray(suppliers) && suppliers.map(supplier => (
+                  <option key={supplier._id} value={supplier._id}>
+                    {supplier.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Items</h3>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="btn btn-secondary text-sm"
+                >
+                  + Add Item
+                </button>
+              </div>
+            </div>
+
+            {formData.items.map((item, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-4">
+                  <div className="mb-4">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                      <input
+                        type="radio"
+                        name={`itemType-${index}`}
+                        checked={!item.isCustom}
+                        onChange={() => handleItemChange(index, 'isCustom', false)}
+                      />
+                      Existing Product
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                      <input
+                        type="radio"
+                        name={`itemType-${index}`}
+                        checked={item.isCustom}
+                        onChange={() => handleItemChange(index, 'isCustom', true)}
+                      />
+                      Add New Product
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {!item.isCustom ? (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                          <select
+                            value={item.product}
+                            onChange={(e) => handleItemChange(index, 'product', e.target.value)}
+                            className="input"
+                            required
+                          >
+                            <option value="">Select Product</option>
+                            {Array.isArray(products) && products.map(product => (
+                              <option key={product._id} value={product._id}>
+                                {product.name} - {product.brand} (Stock: {product.stock?.current || 0})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                          <input
+                            type="text"
+                            value={item.customName}
+                            onChange={(e) => handleItemChange(index, 'customName', e.target.value)}
+                            className="input"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                          <input
+                            type="text"
+                            value={item.customBrand}
+                            onChange={(e) => handleItemChange(index, 'customBrand', e.target.value)}
+                            className="input"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                          <input
+                            type="text"
+                            value={item.customCategory}
+                            onChange={(e) => handleItemChange(index, 'customCategory', e.target.value)}
+                            className="input"
+                            required
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
+                        className="input"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price</label>
+                      <input
+                        type="number"
+                        value={item.unitPrice}
+                        onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))}
+                        className="input"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeItem(index)}
+                    className="text-red-600 hover:text-red-900 text-sm"
+                  >
+                    Remove Item
+                  </button>
+                </div>
+              ))}
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount</label>
+                  <input
+                    type="number"
+                    name="discount"
+                    value={formData.discount}
+                    onChange={handleChange}
+                    className="input"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax</label>
+                  <input
+                    type="number"
+                    name="tax"
+                    value={formData.tax}
+                    onChange={handleChange}
+                    className="input"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Amount</label>
+                  <input
+                    type="number"
+                    name="paymentAmount"
+                    value={formData.paymentAmount}
+                    onChange={handleChange}
+                    className="input"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <select
+                  name="paymentMethod"
+                  value={formData.paymentMethod}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                >
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="card">Card</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="mobile_money">Mobile Money</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  rows={3}
+                  className="input"
+                  placeholder="Additional notes..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                >
+                  Create Invoice
+                </button>
+              </div>
+            </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Payment Modal Component
+const PaymentModal = ({ invoice, onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    amount: invoice.amountDue || 0,
+    method: 'cash',
+    reference: '',
+    notes: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="card max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Add Payment</h2>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Invoice</label>
+              <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded">
+                {invoice.invoiceNumber} - {invoice.type}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Amount Due</label>
+              <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded">
+                ৳{invoice.amountDue.toLocaleString()}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Amount</label>
+              <input
+                type="number"
+                name="amount"
+                value={formData.amount}
+                onChange={handleChange}
+                className="input"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
+              <select
+                name="method"
+                value={formData.method}
+                onChange={handleChange}
+                className="input"
+                required
+              >
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="card">Card</option>
+                <option value="cheque">Cheque</option>
+                <option value="mobile_money">Mobile Money</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reference</label>
+              <input
+                type="text"
+                name="reference"
+                value={formData.reference}
+                onChange={handleChange}
+                className="input"
+                placeholder="Payment notes..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Payment notes...</label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                className="input"
+                placeholder="Payment notes..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+              >
+                Add Payment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Invoices;
