@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { Fragment } from 'react';
 import { FileText, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Plus, Edit, Download, X, Receipt, ShoppingCart } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
@@ -255,54 +256,57 @@ const Invoices = () => {
     if (!showQuickPaymentModal || !selectedInvoice) return null;
     
     const amountDue = selectedInvoice.getAmountDue?.() || 
-                    (selectedInvoice.total - (selectedInvoice.amountPaid || 0));
+                (selectedInvoice.total - (selectedInvoice.amountPaid || 0));
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
-          <h3 className="text-lg font-semibold mb-4">Add Payment</h3>
-          <div className="mb-4">
-            <p className="text-gray-600">
-              Invoice #{selectedInvoice.invoiceNumber}
-            </p>
-            <p className="text-sm text-gray-500">
-              Total: ৳{selectedInvoice.total?.toLocaleString() || 0}
-            </p>
-            <p className="text-sm text-gray-500">
-              Already Paid: ৳{(selectedInvoice.amountPaid || 0).toLocaleString()}
-            </p>
-            <p className="text-sm font-medium text-gray-900">
-              Amount Due: ৳{amountDue.toLocaleString()}
-            </p>
-          </div>
-           <div className="flex justify-end space-x-3">
-            <button
-              onClick={() => setShowQuickPaymentModal(false)}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              onClick={() => {
-                handleAddPayment({
-                   paymentAmount: amountDue,
-                   paymentMethod: 'cash'
-                 });
-               }}
-             >
-               Pay Full Amount Due
-             </button>
+      <Fragment>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Add Payment</h3>
+            <div className="mb-4">
+              <p className="text-gray-600">
+                Invoice #{selectedInvoice.invoiceNumber}
+              </p>
+              <p className="text-sm text-gray-500">
+                Total: ৳{selectedInvoice.total?.toLocaleString() || 0}
+              </p>
+              <p className="text-sm text-gray-500">
+                Already Paid: ৳{(selectedInvoice.amountPaid || 0).toLocaleString()}
+              </p>
+              <p className="text-sm font-medium text-gray-900">
+                Amount Due: ৳{amountDue.toLocaleString()}
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowQuickPaymentModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                onClick={() => {
+                  handleAddPayment({
+                    paymentAmount: amountDue,
+                    paymentMethod: 'cash'
+                  });
+                }}
+              >
+                Pay Full Amount Due
             </button>
           </div>
         </div>
       </div>
-    );
-  };
+    </Fragment>
+   );
+ };
 
-  return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Header */}
+     return (
+       <div className="space-y-8 animate-fade-in">
+         {/* Header */}
+
+         {/* Add Payment Modal */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
