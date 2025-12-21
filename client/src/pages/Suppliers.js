@@ -30,13 +30,22 @@ const Suppliers = () => {
   const { data: suppliersData, isLoading, error, refetch } = useQuery(
     ['suppliers', currentPage],
     async () => {
-      const { data } = await api.get('/suppliers', {
-        params: { page: currentPage, limit: 15 }
-      });
-      return data;
+      try {
+        const { data } = await api.get('/suppliers', {
+          params: { page: currentPage, limit: 15 }
+        });
+        return data;
+      } catch (error) {
+        console.error('Failed to fetch suppliers:', error);
+        // Return empty data on error to prevent crashes
+        return { suppliers: [], pagination: { total: 0, page: 1, pages: 0 } };
+      }
     },
     {
-      keepPreviousData: true
+      keepPreviousData: true,
+      refetchInterval: 30000,
+      retry: 2,
+      retryDelay: 1000,
     }
   );
 

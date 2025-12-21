@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import axios from 'axios';
+import { tokenManager } from '../utils/tokenManager';
 
 const AuthContext = createContext();
 
@@ -34,6 +35,11 @@ const authReducer = (state, action) => {
         token: null,
         loading: false,
         error: action.payload,
+      };
+    case 'TOKEN_REFRESHED':
+      return {
+        ...state,
+        token: action.payload.accessToken,
       };
     default:
       return state;
@@ -72,6 +78,16 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
+      const token = localStorage.getItem('accessToken');
+      
+      // Check if token is expired before making request
+      if (token && tokenManager.isTokenExpired(token)) {
+        console.log('Token expired, attempting refresh...');
+        await refreshToken();
+        // Retry fetchUser with new token
+        return fetchUser();
+      }
+      
       const response = await axios.get('/api/auth/me');
       dispatch({
         type: 'LOGIN_SUCCESS',
@@ -86,14 +102,7 @@ export const AuthProvider = ({ children }) => {
       if (refreshToken && (error.response?.status === 401 || error.response?.status === 403)) {
         try {
           console.log('Attempting to refresh token...');
-          const refreshResponse = await axios.post('/api/auth/refresh', { refreshToken });
-          const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data;
-          
-          localStorage.setItem('accessToken', accessToken);
-          localStorage.setItem('refreshToken', newRefreshToken);
-          axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-          
-          console.log('Token refreshed successfully, retrying fetchUser...');
+          await refreshToken();
           // Retry fetchUser with new token
           return fetchUser();
         } catch (refreshError) {
@@ -110,6 +119,30 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       dispatch({ type: 'AUTH_ERROR', payload: 'Authentication failed' });
+    }
+  };
+
+  const refreshToken = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        dispatch({ type: 'AUTH_ERROR', payload: 'No refresh token available' });
+        return;
+      }
+      
+      console.log('Refreshing token...');
+      const response = await axios.post('/api/auth/refresh', { refreshToken });
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+      
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', newRefreshToken);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      
+      console.log('Token refreshed successfully');
+      dispatch({ type: 'TOKEN_REFRESHED', payload: { accessToken, refreshToken: newRefreshToken } });
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      dispatch({ type: 'AUTH_ERROR', payload: 'Failed to refresh token' });
     }
   };
 
@@ -183,6 +216,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     register,
     fetchUser,
+    refreshToken,
   };
 
   return (
@@ -197,5 +231,31 @@ export const useAuth = () => {
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  return context;
+};
+
+export const useAuthWithRefresh = () => {
+  const context = useContext(AuthContext);
+  const { isAuthenticated, refreshToken } = context;
+  
+  // Setup automatic token refresh
+  useEffect(() => {
+    if (isAuthenticated && refreshToken) {
+      tokenManager.setupAutoRefresh(
+        async () => {
+          try {
+            await refreshToken();
+            console.log('Auto refresh successful');
+          } catch (error) {
+            console.error('Auto refresh failed:', error);
+          }
+        },
+        () => {
+          console.log('Stopping auto refresh');
+        }
+      );
+    }
+  }, [isAuthenticated, refreshToken]);
+  
   return context;
 };

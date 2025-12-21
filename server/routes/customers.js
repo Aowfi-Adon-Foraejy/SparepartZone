@@ -71,7 +71,14 @@ router.get('/', adminOrStaff, [
   query('type').optional().isString(),
   query('status').optional().isIn(['active', 'overdue', 'all'])
 ], async (req, res) => {
-  console.log('Customers route hit');
+  console.log('Customers route hit with params:', {
+    page: req.query.page,
+    limit: req.query.limit,
+    search: req.query.search,
+    type: req.query.type,
+    status: req.query.status
+  });
+  
   try {
     const errors = validationResult(req);
     console.log('Validation errors:', errors.array());
@@ -80,27 +87,27 @@ router.get('/', adminOrStaff, [
     }
 
     const {
-      page = 1,
-      limit = 20,
+      page = parseInt(req.query.page) || 1,
+      limit = parseInt(req.query.limit) || 20,
       search,
       type,
       status = 'active'
     } = req.query;
-
-    let query;
+    
+    let customerQuery;
 
     if (search) {
-      query = Customer.searchCustomers(search);
+      customerQuery = Customer.searchCustomers(search);
     } else {
-      query = Customer.find({ isActive: true, isBlacklisted: false });
+      customerQuery = Customer.find({ isActive: true, isBlacklisted: false });
     }
 
     if (type) {
-      query = query.where('type').equals(type);
+      customerQuery = customerQuery.where('type').equals(type);
     }
-
+    
     if (status === 'overdue') {
-      query = query.where('financials.outstandingDue').gt(0);
+      customerQuery = customerQuery.where('financials.outstandingDue').gt(0);
     }
 
     // Simple working query
@@ -118,7 +125,20 @@ router.get('/', adminOrStaff, [
       });
     }
 
-    const customers = await customerQuery
+    // Force the base query first, then apply filters
+    let baseQuery = Customer.find({ isActive: true, isBlacklisted: false });
+    
+    if (search) {
+      baseQuery = Customer.searchCustomers(search);
+    }
+    if (type) {
+      baseQuery = baseQuery.where('type').equals(type);
+    }
+    if (status === 'overdue') {
+      baseQuery = baseQuery.where('financials.outstandingDue').gt(0);
+    }
+    
+    const customers = await baseQuery
       .sort({ name: 1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
