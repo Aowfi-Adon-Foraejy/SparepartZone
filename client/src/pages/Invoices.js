@@ -275,7 +275,7 @@ const Invoices = () => {
               Amount Due: ৳{amountDue.toLocaleString()}
             </p>
           </div>
-          <div className="flex justify-end space-x-3">
+           <div className="flex justify-end space-x-3">
             <button
               onClick={() => setShowQuickPaymentModal(false)}
               className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -286,12 +286,13 @@ const Invoices = () => {
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               onClick={() => {
                 handleAddPayment({
-                  paymentAmount: amountDue,
-                  paymentMethod: 'cash'
-                });
-              }}
-            >
-              Add Payment
+                   paymentAmount: amountDue,
+                   paymentMethod: 'cash'
+                 });
+               }}
+             >
+               Pay Full Amount Due
+             </button>
             </button>
           </div>
         </div>
