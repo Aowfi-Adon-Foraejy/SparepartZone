@@ -20,6 +20,7 @@ const Invoices = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [invoiceType, setInvoiceType] = useState('sale');
   const [showQuickPaymentModal, setShowQuickPaymentModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   
   const queryClient = useQueryClient();
@@ -88,6 +89,9 @@ const Invoices = () => {
         setShowCreateModal(false);
         setInvoiceType('sale');
         queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'quick-invoices', 'overdue-invoices']);
+        queryClient.invalidateQueries('customers');
+        queryClient.invalidateQueries('suppliers');
+        queryClient.invalidateQueries('products');
       },
       onError: (error) => {
         toast.error(error.response?.data?.message || 'Failed to create invoice');
@@ -138,11 +142,32 @@ const Invoices = () => {
       onSuccess: () => {
         toast.success('Payment added successfully');
         setSelectedInvoice(null);
-        setShowPaymentModal(false);
+        setShowQuickPaymentModal(false);
         queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'quick-invoices', 'overdue-invoices']);
+        queryClient.invalidateQueries('customers');
       },
       onError: (error) => {
         toast.error(error.response?.data?.message || 'Failed to add payment');
+      }
+    }
+  );
+
+  // Update invoice mutation
+  const updateInvoiceMutation = useMutation(
+    async ({ invoiceId, updateData }) => {
+      const response = await api.put(`/invoices/${invoiceId}`, updateData);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        toast.success('Invoice updated successfully');
+        setSelectedInvoice(null);
+        setShowEditModal(false);
+        queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'quick-invoices', 'overdue-invoices']);
+        queryClient.invalidateQueries('customer-invoices');
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to update invoice');
       }
     }
   );
@@ -341,7 +366,7 @@ const Invoices = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Paid</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
-                {currentData?.invoices?.filter(inv => inv.paymentStatus === 'fully_paid').length || 0}
+                {currentData?.invoices?.filter(inv => inv.paymentStatus === 'fully_paid' || (inv.amountDue !== undefined && inv.amountDue <= 0)).length || 0}
               </p>
             </div>
             <div className="p-3 bg-green-50 rounded-full">
@@ -355,7 +380,7 @@ const Invoices = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Partially Paid</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
-                {currentData?.invoices?.filter(inv => inv.paymentStatus === 'partially_paid').length || 0}
+                {currentData?.invoices?.filter(inv => inv.paymentStatus === 'partially_paid' || (inv.amountDue > 0 && (inv.amountPaid || inv.paid || 0) > 0)).length || 0}
               </p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-full">
@@ -457,13 +482,13 @@ const Invoices = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Total
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Paid
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Due
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -495,27 +520,29 @@ const Invoices = () => {
                       <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.total || 0)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.paid || 0)}</div>
+                      <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.amountPaid || invoice.paid || 0)}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-gray-900">{formatCurrency(Math.max(0, (invoice.total || 0) - (invoice.paid || 0)))}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 text-xs rounded-full ${
-                        Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) === 0 ? 'bg-green-100 text-green-800' :
-                        (invoice.paid || 0) > 0 ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) === 0 ? 'Paid' :
-                         (invoice.paid || 0) > 0 ? 'Partially Paid' : 'Unpaid'}
-                      </span>
-                    </td>
+                     <td className="px-6 py-4 whitespace-nowrap text-right">
+                       <div className="text-sm font-medium text-gray-900">
+                         {formatCurrency(invoice.amountDue || Math.max(0, (invoice.total || 0) - (invoice.amountPaid || invoice.paid || 0)))}
+                       </div>
+                     </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <span className={`px-3 py-1 text-xs rounded-full ${
+                         invoice.paymentStatus === 'fully_paid' ? 'bg-green-100 text-green-800' :
+                         invoice.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
+                         'bg-red-100 text-red-800'
+                       }`}>
+                         {invoice.paymentStatus === 'fully_paid' ? 'Paid' :
+                          invoice.paymentStatus === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
+                       </span>
+                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-2">
                         <button
                           onClick={() => {
-                            // TODO: Implement edit functionality
-                            toast('Edit functionality coming soon');
+                            setSelectedInvoice(invoice);
+                            setShowEditModal(true);
                           }}
                           className="text-blue-600 hover:text-blue-900"
                           title="Edit"
@@ -564,6 +591,13 @@ const Invoices = () => {
             Showing {((currentPage - 1) * 15) + 1} to {Math.min(currentPage * 15, currentData.pagination.total)} of {currentData.pagination.total} results
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
             {displayedPages.map(page => (
               <button
                 key={page}
@@ -591,6 +625,107 @@ const Invoices = () => {
       
       {/* Create Invoice Modal */}
       {renderCreateModal()}
+
+      {/* Edit Invoice Modal */}
+      {showEditModal && selectedInvoice && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Edit Invoice - {selectedInvoice.invoiceNumber}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedInvoice(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <p className="text-yellow-800 text-sm">
+                  <strong>Note:</strong> Editing invoice details will update the invoice record. 
+                  If you need to adjust inventory, please create a separate transaction.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+                  <input
+                    type="text"
+                    className="input bg-gray-50"
+                    value={selectedInvoice.invoiceNumber}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input
+                    type="date"
+                    className="input"
+                    defaultValue={new Date(selectedInvoice.date).toISOString().split('T')[0]}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea
+                  className="input"
+                  rows="3"
+                  defaultValue={selectedInvoice.notes || ''}
+                />
+              </div>
+
+              <div className="mt-6 border-t pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Invoice Summary</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{formatCurrency(selectedInvoice.subtotal || 0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Discount:</span>
+                    <span>{formatCurrency(selectedInvoice.discount || 0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax:</span>
+                    <span>{formatCurrency(selectedInvoice.tax || 0)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <span>Total:</span>
+                    <span>{formatCurrency(selectedInvoice.total || 0)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedInvoice(null);
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  disabled={updateInvoiceMutation.isLoading}
+                >
+                  {updateInvoiceMutation.isLoading ? 'Updating...' : 'Update Invoice'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Payment Modal */}
       {renderQuickPaymentModal()}

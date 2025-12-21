@@ -17,43 +17,52 @@ const generateTokens = async (userId) => {
   // Clean up old refresh tokens first
   await cleanExpiredTokens();
 
-  await User.findByIdAndUpdate(userId, {
-    $push: {
-      refreshTokens: {
-        token: refreshToken,
-        createdAt: new Date()
-      }
-    }
+  // Get current user to manage tokens properly
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Remove old tokens and add new one
+  const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+  user.refreshTokens = user.refreshTokens.filter(token => 
+    new Date(token.createdAt) > tenDaysAgo
+  );
+  
+  // Add new refresh token
+  user.refreshTokens.push({
+    token: refreshToken,
+    createdAt: new Date()
   });
+
+  // Limit to maximum 5 refresh tokens
+  if (user.refreshTokens.length > 5) {
+    user.refreshTokens = user.refreshTokens.slice(-5);
+  }
+
+  await user.save();
 
   return { accessToken, refreshToken };
 };
 
 const verifyRefreshToken = async (refreshToken) => {
   try {
-    console.log('Verifying refresh token...');
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    console.log('Token decoded successfully, userId:', decoded.userId);
     
     const user = await User.findById(decoded.userId);
-    console.log('User found:', !!user, 'Refresh tokens count:', user?.refreshTokens?.length || 0);
 
     if (!user) {
-      console.log('User not found for refresh token');
       throw new Error('User not found');
     }
 
     const tokenExists = user.refreshTokens.find(rt => rt.token === refreshToken);
-    console.log('Refresh token exists in user tokens:', !!tokenExists);
 
     if (!tokenExists) {
-      console.log('Refresh token not found in user refresh tokens');
       throw new Error('Refresh token not found in user records');
     }
 
     return user;
   } catch (error) {
-    console.error('Refresh token verification failed:', error.message);
     if (error.name === 'TokenExpiredError') {
       throw new Error('Refresh token expired');
     } else if (error.name === 'JsonWebTokenError') {
@@ -79,19 +88,22 @@ const revokeAllRefreshTokens = async (userId) => {
 };
 
 const cleanExpiredTokens = async () => {
-  const tenDaysAgo = new Date();
-  tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-
-  await User.updateMany(
-    {},
-    {
-      $pull: {
-        refreshTokens: {
-          createdAt: { $lt: tenDaysAgo }
-        }
-      }
+  const users = await User.find({});
+  
+  for (const user of users) {
+    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+      
+    // Filter out old tokens
+    const validTokens = user.refreshTokens.filter(token => 
+      new Date(token.createdAt) > tenDaysAgo
+    );
+    
+    // Update if tokens were removed
+    if (validTokens.length < user.refreshTokens.length) {
+      user.refreshTokens = validTokens;
+      await user.save();
     }
-  );
+  }
 };
 
 module.exports = {

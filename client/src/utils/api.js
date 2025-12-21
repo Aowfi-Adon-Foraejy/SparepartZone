@@ -23,6 +23,9 @@ api.interceptors.request.use(
   }
 );
 
+let isRefreshing = false;
+let failedQueue = [];
+
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
   (response) => response,
@@ -30,26 +33,47 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, add request to queue
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (refreshToken) {
+        isRefreshing = true;
+        originalRequest._retry = true;
+        
         try {
-          originalRequest._retry = true;
-          
           const response = await api.post('/auth/refresh', { refreshToken });
           const { accessToken, refreshToken: newRefreshToken } = response.data;
           
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', newRefreshToken);
           
+          // Process queued requests
+          failedQueue.forEach(({ resolve }) => resolve(accessToken));
+          failedQueue = [];
+          
           // Retry the original request with new token
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch (refreshError) {
           console.error('Token refresh failed:', refreshError);
+          failedQueue.forEach(({ reject }) => reject(refreshError));
+          failedQueue = [];
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
+        } finally {
+          isRefreshing = false;
         }
       } else {
         window.location.href = '/login';

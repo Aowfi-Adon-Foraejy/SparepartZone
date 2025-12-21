@@ -171,6 +171,9 @@ invoiceSchema.pre('save', function(next) {
     this.dueDate = dueDate;
   }
   
+  // Update payment status based on current payments
+  this.updateStatus(false);
+  
   next();
 });
 
@@ -219,12 +222,12 @@ invoiceSchema.methods.getDaysOverdue = function() {
   return Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
 };
 
-invoiceSchema.methods.updateStatus = function() {
+invoiceSchema.methods.updateStatus = function(saveAfterUpdate = true) {
   const amountPaid = this.getAmountPaid();
   const amountDue = this.getAmountDue();
   const daysOverdue = this.getDaysOverdue();
   
-  if (amountDue <= 0) {
+  if (amountDue <= 0 || amountPaid >= this.total) {
     this.paymentStatus = 'fully_paid';
     this.status = 'paid';
   } else if (amountPaid > 0) {
@@ -239,7 +242,11 @@ invoiceSchema.methods.updateStatus = function() {
     }
   }
   
-  return this.save();
+  if (saveAfterUpdate) {
+    return this.save();
+  } else {
+    return Promise.resolve(this);
+  }
 };
 
 invoiceSchema.statics.getSalesInvoices = function(filters = {}) {

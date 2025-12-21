@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
@@ -19,6 +19,7 @@ const Products = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const queryClient = useQueryClient();
 
   const { data: productsData, isLoading, error, refetch } = useQuery(
     'products',
@@ -27,7 +28,8 @@ const Products = () => {
       return data;
     },
     {
-      refetchInterval: 30000
+      refetchInterval: 60000, // Reduced from 30s to 60s since we have invalidation
+      staleTime: 30000
     }
   );
 
@@ -82,6 +84,8 @@ const Products = () => {
       await api.post('/products', productData);
       setShowAddModal(false);
       refetch();
+      queryClient.invalidateQueries('products');
+      queryClient.invalidateQueries('low-stock-products');
     } catch (error) {
       console.error('Error adding product:', error);
     }
@@ -93,6 +97,8 @@ const Products = () => {
       setShowEditModal(false);
       setSelectedProduct(null);
       refetch();
+      queryClient.invalidateQueries('products');
+      queryClient.invalidateQueries('low-stock-products');
     } catch (error) {
       console.error('Error updating product:', error);
     }

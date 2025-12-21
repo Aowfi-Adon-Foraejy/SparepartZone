@@ -226,8 +226,6 @@ router.get('/:id/pdf', adminOrStaff, async (req, res) => {
 
 // Create Sales Invoice
 router.post('/sales', adminOrStaff, [
-  body('customer').optional().notEmpty().withMessage('Customer ID is required for existing customers'),
-  body('customerInfo').optional().isObject().withMessage('Customer information must be an object'),
   body('isNewCustomer').optional().isBoolean().withMessage('isNewCustomer must be boolean'),
   body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
   body('items.*.product').notEmpty().withMessage('Product ID is required'),
@@ -239,6 +237,7 @@ router.post('/sales', adminOrStaff, [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('Validation errors:', errors.array());
+      console.log('Request body:', req.body);
       return res.status(400).json({ errors: errors.array(), message: 'Validation failed' });
     }
 
@@ -253,10 +252,27 @@ router.post('/sales', adminOrStaff, [
       notes, 
       paymentAmount = 0, 
       paymentMethod,
-      subtotal: initialSubtotal = 0
+      // Ignore frontend totals to prevent any calculation issues
+      // subtotal: frontendSubtotal = 0,
+      // total: frontendTotal = 0
     } = req.body;
 
-    let subtotal = initialSubtotal;
+    // Custom validation for customer/customerInfo
+    if (isNewCustomer) {
+      if (!customerInfo || !customerInfo.name || !customerInfo.phone) {
+        return res.status(400).json({ 
+          message: 'Customer name and phone are required for new customer',
+          errors: [{ msg: 'Customer name and phone are required for new customer' }]
+        });
+      }
+    } else {
+      if (!customer) {
+        return res.status(400).json({ 
+          message: 'Customer ID is required for existing customer',
+          errors: [{ msg: 'Customer ID is required for existing customer' }]
+        });
+      }
+    }
 
     // Handle customer (existing or new)
     let customerDoc;
@@ -277,6 +293,7 @@ router.post('/sales', adminOrStaff, [
       return res.status(400).json({ message: 'Either customer ID or new customer information is required' });
     }
 
+    let subtotal = 0;
     const processedItems = [];
 
     for (const item of items) {
@@ -293,6 +310,7 @@ router.post('/sales', adminOrStaff, [
         }
 
         const itemTotal = item.quantity * item.unitPrice;
+        
         processedItems.push({
           product: product._id,
           quantity: item.quantity,
@@ -319,6 +337,10 @@ router.post('/sales', adminOrStaff, [
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const invoiceNumber = `${prefix}${year}${month}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
 
+    const initialPaymentStatus = paymentAmount >= calculatedTotal ? 'fully_paid' : 
+                                paymentAmount > 0 ? 'partially_paid' : 'unpaid';
+    const initialStatus = paymentAmount >= calculatedTotal ? 'paid' : 'sent';
+
     const invoice = new Invoice({
       invoiceNumber,
       type: 'sale',
@@ -328,9 +350,8 @@ router.post('/sales', adminOrStaff, [
       discount,
       tax,
       total: calculatedTotal,
-      status: paymentAmount >= calculatedTotal ? 'paid' : 'sent',
-      paymentStatus: paymentAmount >= calculatedTotal ? 'fully_paid' : 
-                     paymentAmount > 0 ? 'partially_paid' : 'unpaid',
+      status: initialStatus,
+      paymentStatus: initialPaymentStatus,
       notes,
       createdBy: req.user._id
     });
@@ -344,6 +365,11 @@ router.post('/sales', adminOrStaff, [
     }
 
     await invoice.save();
+    
+    // Ensure payment status is correct after payment is added
+    if (paymentAmount > 0) {
+      await invoice.updateStatus();
+    }
 
     // Update product stock (after invoice is saved so invoiceNumber is available)
     for (const item of processedItems) {
@@ -452,6 +478,73 @@ router.post('/:id/payments', adminOrStaff, [
   }
 });
 
+// Get Customer Invoices
+router.get('/customer/:customerId', adminOrStaff, async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    
+    const invoices = await Invoice.find({ 
+      customer: customerId,
+      type: { $in: ['sale', 'quick'] }
+    })
+      .populate('items.product', 'name brand sku')
+      .populate('createdBy', 'username')
+      .sort({ date: -1 });
+
+    res.json({
+      invoices: invoices.map(invoice => ({
+        ...invoice.toObject(),
+        amountPaid: invoice.getAmountPaid(),
+        amountDue: invoice.getAmountDue(),
+        daysOverdue: invoice.getDaysOverdue()
+      }))
+    });
+  } catch (error) {
+    console.error('Customer invoices fetch error:', error);
+    res.status(500).json({ message: 'Server error while fetching customer invoices' });
+  }
+});
+
+// Update Invoice
+router.put('/:id', adminOrStaff, [
+  body('notes').optional().isString().withMessage('Notes must be a string'),
+  body('date').optional().isISO8601().withMessage('Date must be a valid date')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    const { notes, date } = req.body;
+
+    // Update allowed fields only
+    if (notes !== undefined) invoice.notes = notes;
+    if (date) invoice.date = new Date(date);
+
+    await invoice.save();
+
+    const populatedInvoice = await Invoice.findById(invoice._id)
+      .populate('customer', 'name email phone')
+      .populate('supplier', 'name email phone businessInfo')
+      .populate('items.product', 'name brand sku')
+      .populate('createdBy', 'username');
+
+    res.json({
+      message: 'Invoice updated successfully',
+      invoice: populatedInvoice
+    });
+  } catch (error) {
+    console.error('Invoice update error:', error);
+    res.status(500).json({ message: 'Server error during invoice update' });
+  }
+});
+
 // Get Single Invoice
 router.get('/:id', adminOrStaff, async (req, res) => {
   try {
@@ -482,7 +575,9 @@ router.get('/:id', adminOrStaff, async (req, res) => {
 
 // Create Purchase Invoice
 router.post('/purchases', adminOrStaff, [
-  body('supplier').notEmpty().withMessage('Supplier is required'),
+  body('supplier').optional().notEmpty().withMessage('Supplier ID is required for existing suppliers'),
+  body('supplierInfo').optional().isObject().withMessage('Supplier information must be an object'),
+  body('isNewSupplier').optional().isBoolean().withMessage('isNewSupplier must be boolean'),
   body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
   body('items.*.product').optional().notEmpty().withMessage('Product ID is required for existing products'),
   body('items.*.newProductInfo').optional().isObject().withMessage('New product info must be an object'),
@@ -497,13 +592,38 @@ router.post('/purchases', adminOrStaff, [
       return res.status(400).json({ errors: errors.array(), message: 'Validation failed' });
     }
 
-    const supplier = await Supplier.findById(req.body.supplier);
-    if (!supplier) {
-      return res.status(404).json({ message: 'Supplier not found' });
-    }
-
     console.log('Purchase invoice request body:', req.body);
-    const { items, discount = 0, tax = 0, notes, paymentAmount = 0, paymentMethod, total } = req.body;
+    const { 
+      supplier, 
+      isNewSupplier = false, 
+      supplierInfo, 
+      items, 
+      discount = 0, 
+      tax = 0, 
+      notes, 
+      paymentAmount = 0, 
+      paymentMethod, 
+      total 
+    } = req.body;
+
+    // Handle supplier (existing or new)
+    let supplierDoc;
+    if (isNewSupplier && supplierInfo) {
+      // Create new supplier
+      supplierDoc = new Supplier({
+        ...supplierInfo,
+        createdBy: req.user._id
+      });
+      await supplierDoc.save();
+    } else if (supplier) {
+      // Use existing supplier
+      supplierDoc = await Supplier.findById(supplier);
+      if (!supplierDoc) {
+        return res.status(404).json({ message: 'Supplier not found' });
+      }
+    } else {
+      return res.status(400).json({ message: 'Either supplier ID or new supplier information is required' });
+    }
 
     const processedItems = [];
     let calculatedSubtotal = 0;
@@ -521,7 +641,7 @@ router.post('/purchases', adminOrStaff, [
               reorderThreshold: 10,
               minStock: 5
             },
-            supplier: supplier._id,
+            supplier: supplierDoc._id,
             createdBy: req.user._id
           });
           await product.save();
@@ -533,7 +653,7 @@ router.post('/purchases', adminOrStaff, [
             null, // We'll update with invoice ID after creation
             'Purchase',
             req.user._id,
-            `Purchase from ${supplier.businessInfo.companyName}`
+            `Purchase from ${supplierDoc.businessInfo.companyName}`
           );
         } else {
           // Use existing product
@@ -548,7 +668,7 @@ router.post('/purchases', adminOrStaff, [
             null, // We'll update with invoice ID after creation
             'Purchase',
             req.user._id,
-            `Purchase from ${supplier.businessInfo.companyName}`
+            `Purchase from ${supplierDoc.businessInfo.companyName}`
           );
         }
 
@@ -582,7 +702,7 @@ router.post('/purchases', adminOrStaff, [
     const invoice = new Invoice({
       invoiceNumber,
       type: 'purchase',
-      supplier: supplier._id,
+      supplier: supplierDoc._id,
       items: processedItems,
       subtotal: calculatedSubtotal,
       discount,
@@ -621,7 +741,7 @@ router.post('/purchases', adminOrStaff, [
     }
 
     // Update supplier financials
-    await supplier.updateFinancials(calculatedTotal, paymentAmount);
+    await supplierDoc.updateFinancials(calculatedTotal, paymentAmount);
 
     // Create transaction
     await Transaction.createTransaction({
@@ -631,7 +751,7 @@ router.post('/purchases', adminOrStaff, [
       description: `Purchase invoice: ${invoice.invoiceNumber}`,
       reference: invoice._id,
       referenceModel: 'Invoice',
-      supplier: supplier._id,
+      supplier: supplierDoc._id,
       paymentMethod: paymentMethod || 'bank_transfer',
       account: 'payables',
       balanceBefore: 0,

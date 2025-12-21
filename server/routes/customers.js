@@ -71,13 +71,10 @@ router.get('/', adminOrStaff, [
   query('type').optional().isString(),
   query('status').optional().isIn(['active', 'overdue', 'all'])
 ], async (req, res) => {
-  console.log('Customers route hit with params:', {
-    page: req.query.page,
-    limit: req.query.limit,
-    search: req.query.search,
-    type: req.query.type,
-    status: req.query.status
-  });
+  // Only log when there are actual params to reduce noise
+  if (req.query.page || req.query.search || req.query.type || req.query.status) {
+    console.log('Customers route hit with params:', req.query);
+  }
   
   try {
     const errors = validationResult(req);
@@ -110,22 +107,7 @@ router.get('/', adminOrStaff, [
       customerQuery = customerQuery.where('financials.outstandingDue').gt(0);
     }
 
-    // Simple working query
-    let customerQuery = Customer.find({ isActive: true, isBlacklisted: false });
-    
-    if (search) {
-      customerQuery = Customer.find({
-        isActive: true, 
-        isBlacklisted: false,
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { phone: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
-        ]
-      });
-    }
-
-    // Force the base query first, then apply filters
+    // Build base query with filters
     let baseQuery = Customer.find({ isActive: true, isBlacklisted: false });
     
     if (search) {
@@ -207,6 +189,21 @@ router.get('/overdue', adminOrStaff, async (req, res) => {
   } catch (error) {
     console.error('Overdue customers fetch error:', error);
     res.status(500).json({ message: 'Server error while fetching overdue customers' });
+  }
+});
+
+// Simple endpoint for dropdowns - no pagination required
+router.get('/list', adminOrStaff, async (req, res) => {
+  try {
+    const customers = await Customer.find({ 
+      isActive: true, 
+      isBlacklisted: false 
+    }).select('name phone _id').limit(100);
+    
+    res.json({ customers });
+  } catch (error) {
+    console.error('Customers list fetch error:', error);
+    res.status(500).json({ message: 'Server error while fetching customers list' });
   }
 });
 

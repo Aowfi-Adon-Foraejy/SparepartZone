@@ -30,7 +30,7 @@ const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
   const { data: customersData } = useQuery(
     'customers',
     async () => {
-      const response = await api.get('/customers');
+      const response = await api.get('/customers/list');
       return response.data;
     }
   );
@@ -53,8 +53,11 @@ const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
   }, [customersData, productsData]);
 
   const calculateTotals = () => {
-    const subtotal = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-    const total = subtotal - formData.discount + formData.tax;
+    const subtotal = formData.items.reduce((sum, item) => {
+      const itemTotal = item.quantity * item.unitPrice;
+      return sum + itemTotal;
+    }, 0);
+    const total = Math.max(0, subtotal - formData.discount + formData.tax);
     return { subtotal, total };
   };
 
@@ -71,9 +74,18 @@ const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
     };
 
     if (formData.isNewCustomer) {
-      submitData.customerInfo = formData.customerInfo;
+      // Remove customer field and add customerInfo for new customer
+      delete submitData.customer;
+      // Only include customerInfo if it has meaningful data
+      if (formData.customerInfo.name || formData.customerInfo.phone) {
+        submitData.customerInfo = formData.customerInfo;
+      }
+    } else {
+      // Remove customerInfo for existing customers
+      delete submitData.customerInfo;
     }
 
+    console.log('Submitting sales invoice data:', submitData);
     onSubmit(submitData);
   };
 
@@ -115,19 +127,21 @@ const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
               <div className="flex gap-2">
-                <select
-                  className="input flex-1"
-                  value={formData.customer}
-                  onChange={(e) => handleCustomerSelect(e.target.value)}
-                  required
-                >
-                  <option value="">Select Customer...</option>
-                  {customers.map(customer => (
-                    <option key={customer._id} value={customer._id}>
-                      {customer.name} - {customer.phone}
-                    </option>
-                  ))}
-                </select>
+                {!formData.isNewCustomer && (
+                  <select
+                    className="input flex-1"
+                    value={formData.customer}
+                    onChange={(e) => handleCustomerSelect(e.target.value)}
+                    required={!formData.isNewCustomer}
+                  >
+                    <option value="">Select Customer...</option>
+                    {customers.map(customer => (
+                      <option key={customer._id} value={customer._id}>
+                        {customer.name} - {customer.phone}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button
                   type="button"
                   onClick={toggleNewCustomer}

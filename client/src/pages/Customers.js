@@ -15,12 +15,15 @@ import {
   AlertTriangle,
   TrendingUp,
   TrendingDown,
-  X
+  X,
+  Eye,
+  Receipt
 } from 'lucide-react';
 
 const Customers = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
@@ -41,9 +44,27 @@ const Customers = () => {
     },
     {
       keepPreviousData: true,
-      refetchInterval: 30000,
+      refetchInterval: 60000, // Reduced from 30s to 60s since we have invalidation
       retry: 2,
       retryDelay: 1000,
+      staleTime: 30000
+    }
+  );
+
+  const { data: customerInvoicesData } = useQuery(
+    ['customer-invoices', selectedCustomer?._id],
+    async () => {
+      if (!selectedCustomer?._id) return { invoices: [] };
+      try {
+        const response = await api.get(`/invoices/customer/${selectedCustomer._id}`);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to fetch customer invoices:', error);
+        return { invoices: [] };
+      }
+    },
+    {
+      enabled: !!selectedCustomer?._id && showDetailsModal,
     }
   );
 
@@ -284,25 +305,35 @@ const Customers = () => {
                        customer.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="table-cell">
-                    <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <button
-                        onClick={() => {
-                          setSelectedCustomer(customer);
-                          setShowEditModal(true);
-                        }}
-                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCustomer(customer._id)}
-                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+                   <td className="table-cell">
+                     <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                       <button
+                         onClick={() => {
+                           setSelectedCustomer(customer);
+                           setShowDetailsModal(true);
+                         }}
+                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                         title="View Details"
+                       >
+                         <Eye className="h-4 w-4" />
+                       </button>
+                       <button
+                         onClick={() => {
+                           setSelectedCustomer(customer);
+                           setShowEditModal(true);
+                         }}
+                         className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
+                       >
+                         <Edit className="h-4 w-4" />
+                       </button>
+                       <button
+                         onClick={() => handleDeleteCustomer(customer._id)}
+                         className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </button>
+                     </div>
+                   </td>
                 </tr>
               ))}
             </tbody>
@@ -360,6 +391,151 @@ const Customers = () => {
                 onCancel={() => setShowEditModal(false)}
                 initialData={selectedCustomer}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Details Modal */}
+      {showDetailsModal && selectedCustomer && (
+        <div className="modal-overlay">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="modal-content animate-bounce-in max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Customer Details</h2>
+                  <p className="text-sm text-gray-600 mt-1">{selectedCustomer.name}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    setSelectedCustomer(null);
+                  }}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Customer Info */}
+              <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Name</p>
+                    <p className="font-medium">{selectedCustomer.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{selectedCustomer.email || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Phone</p>
+                    <p className="font-medium">{selectedCustomer.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Type</p>
+                    <span className={`badge ${
+                      selectedCustomer.type === 'business' ? 'badge-primary' : 
+                      selectedCustomer.type === 'individual' ? 'badge-success' : 'badge-gray'
+                    }`}>
+                      {selectedCustomer.type}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Status</p>
+                    <span className={`badge ${
+                      selectedCustomer.isBlacklisted ? 'badge-danger' : 
+                      selectedCustomer.isActive ? 'badge-success' : 'badge-gray'
+                    }`}>
+                      {selectedCustomer.isBlacklisted ? 'Blacklisted' : 
+                       selectedCustomer.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Outstanding Due</p>
+                    <p className={`font-semibold ${
+                      (selectedCustomer.financials?.outstandingDue || 0) > 0 ? 'text-danger-600' : 'text-success-600'
+                    }`}>
+                      {formatCurrency(selectedCustomer.financials?.outstandingDue || 0)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Log */}
+              <div className="bg-white border border-gray-200 rounded-lg">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Payment Log</h3>
+                  <p className="text-sm text-gray-500 mt-1">All invoices and payments for this customer</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Invoice ID
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total Amount
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Paid Amount
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Due Amount
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {customerInvoicesData?.invoices?.map((invoice) => (
+                        <tr key={invoice._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</div>
+                            <div className="text-sm text-gray-500">{invoice.type}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">{new Date(invoice.date).toLocaleDateString()}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.total || 0)}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.paid || 0)}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatCurrency(Math.max(0, (invoice.total || 0) - (invoice.paid || 0)))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-3 py-1 text-xs rounded-full ${
+                              Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) === 0 ? 'bg-green-100 text-green-800' :
+                              Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) < (invoice.total || 0) && (invoice.paid || 0) > 0 ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) === 0 ? 'Paid' :
+                               Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) < (invoice.total || 0) && (invoice.paid || 0) > 0 ? 'Partially Paid' : 'Unpaid'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {(!customerInvoicesData?.invoices || customerInvoicesData.invoices.length === 0) && (
+                  <div className="text-center py-8">
+                    <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No invoices found for this customer</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

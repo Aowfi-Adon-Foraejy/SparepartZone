@@ -43,9 +43,10 @@ const Suppliers = () => {
     },
     {
       keepPreviousData: true,
-      refetchInterval: 30000,
+      refetchInterval: 60000, // Reduced from 30s to 60s since we have invalidation
       retry: 2,
       retryDelay: 1000,
+      staleTime: 30000
     }
   );
 

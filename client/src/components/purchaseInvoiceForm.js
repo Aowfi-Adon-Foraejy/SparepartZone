@@ -7,6 +7,20 @@ import { formatCurrency } from '../utils/currency';
 const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
     supplier: '',
+    isNewSupplier: false,
+    supplierInfo: {
+      businessInfo: {
+        companyName: '',
+        address: '',
+        phone: '',
+        email: ''
+      },
+      contactPerson: {
+        name: '',
+        phone: '',
+        email: ''
+      }
+    },
     items: [{ product: '', quantity: 1, unitPrice: 0, isNewProduct: false }],
     discount: 0,
     tax: 0,
@@ -17,7 +31,9 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
 
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(['Electronics', 'Engine Parts', 'Body Parts', 'Accessories', 'Oil & Fluids', 'Tires & Wheels', 'Brake System', 'Battery & Electrical', 'Transmission', 'Suspension', 'Lighting', 'Tools & Equipment', 'Other']);
   const [showNewProductForms, setShowNewProductForms] = useState({});
+  const [showNewSupplierForm, setShowNewSupplierForm] = useState(false);
 
   const { data: suppliersData } = useQuery(
     'suppliers',
@@ -50,7 +66,7 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
       const quantity = item.quantity || 0;
       return sum + (price * quantity);
     }, 0);
-    const total = subtotal - formData.discount + formData.tax;
+    const total = Math.max(0, subtotal - formData.discount + formData.tax);
     return { subtotal, total };
   };
 
@@ -60,8 +76,12 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.supplier) {
+    if (!formData.isNewSupplier && !formData.supplier) {
       toast.error('Please select a supplier');
+      return;
+    }
+    if (formData.isNewSupplier && (!formData.supplierInfo.businessInfo.companyName || !formData.supplierInfo.contactPerson.name)) {
+      toast.error('Please provide company name and contact person for new supplier');
       return;
     }
     
@@ -97,6 +117,10 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
       type: 'purchase'
     };
 
+    if (formData.isNewSupplier) {
+      submitData.supplierInfo = formData.supplierInfo;
+    }
+
     onSubmit(submitData);
   };
 
@@ -128,6 +152,13 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
       ...newItems[index].newProductInfo,
       [field]: value
     };
+
+    // Auto-calculate selling price when cost price changes
+    if (field === 'costPrice' && value > 0) {
+      const calculatedSellingPrice = parseFloat(value) * 1.1;
+      newItems[index].newProductInfo.sellingPrice = calculatedSellingPrice;
+    }
+
     setFormData({ ...formData, items: newItems });
   };
 
@@ -152,6 +183,11 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
     setFormData({ ...formData, items: newItems });
   };
 
+  const toggleNewSupplier = () => {
+    setShowNewSupplierForm(!showNewSupplierForm);
+    setFormData({ ...formData, isNewSupplier: !formData.isNewSupplier });
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4">
@@ -170,20 +206,152 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
             {/* Supplier Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Supplier</label>
-              <select
-                className="input"
-                value={formData.supplier}
-                onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                required
-              >
-                <option value="">Select Supplier...</option>
-                {suppliers.map(supplier => (
-                  <option key={supplier._id} value={supplier._id}>
-                    {supplier.businessInfo.companyName} - {supplier.contactPerson.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                {!formData.isNewSupplier && (
+                  <select
+                    className="input flex-1"
+                    value={formData.supplier}
+                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    required={!formData.isNewSupplier}
+                  >
+                    <option value="">Select Supplier...</option>
+                    {suppliers.map(supplier => (
+                      <option key={supplier._id} value={supplier._id}>
+                        {supplier.businessInfo.companyName} - {supplier.contactPerson.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  type="button"
+                  onClick={toggleNewSupplier}
+                  className="btn btn-secondary"
+                >
+                  {formData.isNewSupplier ? 'Use Existing' : '+ New Supplier'}
+                </button>
+              </div>
             </div>
+
+            {/* New Supplier Form */}
+            {showNewSupplierForm && (
+              <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+                <h3 className="font-medium text-gray-900 mb-4">New Supplier Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Company Name"
+                    className="input"
+                    value={formData.supplierInfo.businessInfo.companyName}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      supplierInfo: {
+                        ...formData.supplierInfo,
+                        businessInfo: {
+                          ...formData.supplierInfo.businessInfo,
+                          companyName: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Contact Person Name"
+                    className="input"
+                    value={formData.supplierInfo.contactPerson.name}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      supplierInfo: {
+                        ...formData.supplierInfo,
+                        contactPerson: {
+                          ...formData.supplierInfo.contactPerson,
+                          name: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                  <input
+                    type="email"
+                    placeholder="Company Email"
+                    className="input"
+                    value={formData.supplierInfo.businessInfo.email}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      supplierInfo: {
+                        ...formData.supplierInfo,
+                        businessInfo: {
+                          ...formData.supplierInfo.businessInfo,
+                          email: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                  <input
+                    type="email"
+                    placeholder="Contact Person Email"
+                    className="input"
+                    value={formData.supplierInfo.contactPerson.email}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      supplierInfo: {
+                        ...formData.supplierInfo,
+                        contactPerson: {
+                          ...formData.supplierInfo.contactPerson,
+                          email: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Company Phone"
+                    className="input"
+                    value={formData.supplierInfo.businessInfo.phone}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      supplierInfo: {
+                        ...formData.supplierInfo,
+                        businessInfo: {
+                          ...formData.supplierInfo.businessInfo,
+                          phone: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Contact Person Phone"
+                    className="input"
+                    value={formData.supplierInfo.contactPerson.phone}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      supplierInfo: {
+                        ...formData.supplierInfo,
+                        contactPerson: {
+                          ...formData.supplierInfo.contactPerson,
+                          phone: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Company Address"
+                    className="input col-span-2"
+                    value={formData.supplierInfo.businessInfo.address}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      supplierInfo: {
+                        ...formData.supplierInfo,
+                        businessInfo: {
+                          ...formData.supplierInfo.businessInfo,
+                          address: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Items */}
             <div>
@@ -227,7 +395,7 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
                         <option value="">Select Product...</option>
                         {products.map(product => (
                           <option key={product._id} value={product._id}>
-                            {product.name} - {product.brand} - {product.sku}
+                            {product.name} - {product.brand} - {product.sku} (Stock: {product.stock?.current || 0})
                           </option>
                         ))}
                       </select>
@@ -268,13 +436,18 @@ const PurchaseInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
                           value={item.newProductInfo?.brand || ''}
                           onChange={(e) => handleNewProductChange(index, 'brand', e.target.value)}
                         />
-                        <input
-                          type="text"
-                          placeholder="Category"
+                        <select
                           className="input"
                           value={item.newProductInfo?.category || ''}
                           onChange={(e) => handleNewProductChange(index, 'category', e.target.value)}
-                        />
+                        >
+                          <option value="">Select Category...</option>
+                          {categories.map(category => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
+                        </select>
                         <input
                           type="text"
                           placeholder="SKU"
