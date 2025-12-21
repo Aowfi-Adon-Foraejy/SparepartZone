@@ -390,9 +390,10 @@ router.post('/sales', adminOrStaff, [
 
     // Update customer financials
     try {
+      await customerDoc.updateFinancials(calculatedTotal, paymentAmount);
       await req.user.updateActivity('sales');
     } catch (error) {
-      console.error('Error updating user activity (sales):', error);
+      console.error('Error updating customer financials:', error);
     }
 
     const populatedInvoice = await Invoice.findById(invoice._id)
@@ -470,7 +471,11 @@ router.post('/:id/payments', adminOrStaff, [
 
     res.json({
       message: 'Payment added successfully',
-      invoice: updatedInvoice
+      invoice: {
+        ...updatedInvoice.toObject(),
+        amountPaid: updatedInvoice.getAmountPaid(),
+        amountDue: updatedInvoice.getAmountDue()
+      }
     });
   } catch (error) {
     console.error('Payment addition error:', error);
