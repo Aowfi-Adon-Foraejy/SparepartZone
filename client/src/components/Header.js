@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Menu, Bell, Search, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, Bell, Settings, LogOut, ChevronDown } from 'lucide-react';
 
 const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
+
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationCount] = useState(3);
@@ -26,11 +26,7 @@ const Header = ({ onMenuClick }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log('Searching for:', searchQuery);
-    // Implement search functionality
-  };
+
 
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-soft sticky top-0 z-30">
@@ -45,29 +41,7 @@ const Header = ({ onMenuClick }) => {
               <Menu className="h-5 w-5" />
             </button>
 
-            <div className="hidden lg:block lg:max-w-2xl lg:flex-1 lg:ml-8">
-              <form onSubmit={handleSearch} className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-white transition-all duration-200"
-                  placeholder="Search products, customers, suppliers..."
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                  >
-                    <span className="text-gray-400 hover:text-gray-600">×</span>
-                  </button>
-                )}
-              </form>
-            </div>
+
           </div>
 
           {/* Right Section - Notifications & User */}

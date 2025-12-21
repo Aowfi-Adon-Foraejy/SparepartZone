@@ -150,25 +150,25 @@ const Dashboard = () => {
         />
         <StatCard
           title="Total Products"
-          value={stats?.totalProducts || 0}
+          value={overview?.products?.length || 0}
           icon={Package}
           color="primary"
         />
         <StatCard
           title="Low Stock Items"
-          value={stats?.lowStockProducts || 0}
+          value={overview?.products?.filter(p => p.stock?.current <= p.stock?.reorderThreshold)?.length || 0}
           icon={AlertTriangle}
           color="yellow"
         />
         <StatCard
           title="Total Customers"
-          value={stats?.totalCustomers || 0}
+          value={overview?.customers?.length || 0}
           icon={Users}
           color="blue"
         />
         <StatCard
           title="Total Suppliers"
-          value={stats?.totalSuppliers || 0}
+          value={overview?.suppliers?.length || 0}
           icon={Truck}
           color="primary"
         />

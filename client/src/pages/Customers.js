@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from 'react-query';
-import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import api from '../utils/api';
+import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../utils/currency';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   Users, 
@@ -11,25 +13,28 @@ import {
   Mail,
   Building,
   AlertTriangle,
-  Search,
   TrendingUp,
   TrendingDown,
   X
 } from 'lucide-react';
 
 const Customers = () => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
 
   const { data: customersData, isLoading, error, refetch } = useQuery(
-    'customers',
+    ['customers', currentPage],
     async () => {
-      const { data } = await axios.get('/api/customers');
+      const { data } = await api.get('/customers', {
+        params: { page: currentPage, limit: 15 }
+      });
       return data;
     },
     {
+      keepPreviousData: true,
       refetchInterval: 30000
     }
   );
@@ -51,32 +56,38 @@ const Customers = () => {
 
   const handleAddCustomer = async (customerData) => {
     try {
-      await axios.post('/api/customers', customerData);
+      await api.post('/customers', customerData);
       setShowAddModal(false);
-      refetch();
+      toast.success('Customer created successfully');
+      queryClient.invalidateQueries('customers');
     } catch (error) {
       console.error('Error adding customer:', error);
+      toast.error(error.response?.data?.message || 'Failed to create customer');
     }
   };
 
   const handleEditCustomer = async (customerData) => {
     try {
-      await axios.put(`/api/customers/${selectedCustomer._id}`, customerData);
+      await api.put(`/customers/${selectedCustomer._id}`, customerData);
       setShowEditModal(false);
       setSelectedCustomer(null);
-      refetch();
+      toast.success('Customer updated successfully');
+      queryClient.invalidateQueries('customers');
     } catch (error) {
       console.error('Error updating customer:', error);
+      toast.error(error.response?.data?.message || 'Failed to update customer');
     }
   };
 
   const handleDeleteCustomer = async (customerId) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
       try {
-        await axios.delete(`/api/customers/${customerId}`);
-        refetch();
+        await api.delete(`/customers/${customerId}`);
+        toast.success('Customer deleted successfully');
+        queryClient.invalidateQueries('customers');
       } catch (error) {
         console.error('Error deleting customer:', error);
+        toast.error(error.response?.data?.message || 'Failed to delete customer');
       }
     }
   };
@@ -169,39 +180,32 @@ const Customers = () => {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="flex items-center space-x-4 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search customers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-3 w-full sm:w-80 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            )}
+      {/* Pagination */}
+      {customersData?.pagination?.pages > 1 && (
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-700">
+            Showing {((customersData.pagination.page - 1) * customersData.pagination.limit) + 1} to{' '}
+            {Math.min(customersData.pagination.page * customersData.pagination.limit, customersData.pagination.total)} of{' '}
+            {customersData.pagination.total} results
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, customersData.pagination.pages))}
+              disabled={currentPage === customersData.pagination.pages}
+              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-3">
-          <button className="btn btn-secondary">
-            Filter
-          </button>
-          <button className="btn btn-primary">
-            <Plus className="h-4 w-4" />
-            Add Customer
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Customers Table */}
       <div className="table-container">
@@ -256,10 +260,10 @@ const Customers = () => {
                       <p className={`font-semibold ${
                         (customer.financials?.outstandingDue || 0) > 0 ? 'text-danger-600' : 'text-success-600'
                       }`}>
-                        ৳{(customer.financials?.outstandingDue || 0).toLocaleString()}
+                        {formatCurrency(customer.financials?.outstandingDue || 0)}
                       </p>
                       {customer.creditLimit > 0 && (
-                        <p className="text-xs text-gray-500">Limit: ৳{customer.creditLimit.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">Limit: {formatCurrency(customer.creditLimit)}</p>
                       )}
                     </div>
                   </td>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
-import axios from 'axios';
+import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   Package, 
@@ -23,7 +23,7 @@ const Products = () => {
   const { data: productsData, isLoading, error, refetch } = useQuery(
     'products',
     async () => {
-      const { data } = await axios.get('/api/products');
+      const { data } = await api.get('/products');
       return data;
     },
     {
@@ -34,7 +34,7 @@ const Products = () => {
   const { data: categoriesData } = useQuery(
     'product-categories',
     async () => {
-      const { data } = await axios.get('/api/products/categories');
+      const { data } = await api.get('/products/categories');
       return data;
     },
     {
@@ -48,7 +48,7 @@ const Products = () => {
   const { data: lowStockData } = useQuery(
     'low-stock-products',
     async () => {
-      const { data } = await axios.get('/api/products/low-stock');
+      const { data } = await api.get('/products/low-stock');
       return data;
     }
   );
@@ -69,10 +69,17 @@ const Products = () => {
   }
 
   const { products, pagination } = productsData || {};
+  
+  // Filter products based on search term (Name and SKU)
+  const filteredProducts = products?.filter(product => 
+    searchTerm === '' || 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.sku.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   const handleAddProduct = async (productData) => {
     try {
-      await axios.post('/api/products', productData);
+      await api.post('/products', productData);
       setShowAddModal(false);
       refetch();
     } catch (error) {
@@ -82,7 +89,7 @@ const Products = () => {
 
   const handleEditProduct = async (productData) => {
     try {
-      await axios.put(`/api/products/${selectedProduct._id}`, productData);
+      await api.put(`/products/${selectedProduct._id}`, productData);
       setShowEditModal(false);
       setSelectedProduct(null);
       refetch();
@@ -94,7 +101,7 @@ const Products = () => {
   const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`/api/products/${productId}`);
+        await api.delete(`/products/${productId}`);
         refetch();
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -213,19 +220,7 @@ const Products = () => {
           </div>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <button className="btn btn-secondary">
-            <Filter className="h-4 w-4" />
-            Filter
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn btn-primary"
-          >
-            <Plus className="h-4 w-4" />
-            Add Product
-          </button>
-        </div>
+
       </div>
 
       {/* Products Table */}
@@ -245,7 +240,7 @@ const Products = () => {
               </tr>
             </thead>
             <tbody className="table-body">
-              {products?.map((product) => (
+              {filteredProducts.map((product) => (
                 <tr key={product._id} className="table-row group">
                   <td className="table-cell">
                     <div className="flex items-center space-x-3">

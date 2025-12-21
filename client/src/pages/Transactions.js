@@ -2,47 +2,37 @@ import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { formatCurrency } from '../utils/currency';
 import { 
   Receipt, 
-  Search, 
   TrendingUp, 
   TrendingDown,
   DollarSign,
-  Calendar,
-  Filter,
-  ArrowUpDown
+  Calendar
 } from 'lucide-react';
 
 const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
-    type: '',
-    category: '',
-    account: ''
+    startDate: '',
+    endDate: ''
   });
 
   const { data: transactionsData, isLoading } = useQuery(
-    ['transactions', currentPage, searchTerm, filters],
+    ['transactions', currentPage, filters],
     async () => {
       const params = { 
         page: currentPage, 
-        limit: 20, 
-        search: searchTerm,
+        limit: 15, 
         ...filters
       };
       Object.keys(params).forEach(key => !params[key] && delete params[key]);
       
       const response = await api.get('/transactions', { params });
       return response.data;
-    }
-  );
-
-  const { data: summaryData } = useQuery(
-    'transaction-summary',
-    async () => {
-      const response = await api.get('/transactions/summary');
-      return response.data;
+    },
+    {
+      keepPreviousData: true
     }
   );
 
@@ -72,19 +62,22 @@ const Transactions = () => {
 
   if (isLoading) return <LoadingSpinner />;
 
+  const incomeTotal = transactionsData?.transactions?.filter(t => 
+    (t.type === 'sale' || t.type === 'payment_received' || t.category === 'income')
+  ).reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+
+  const expenseTotal = transactionsData?.transactions?.filter(t => 
+    (t.type === 'purchase' || t.type === 'payment_made' || t.category === 'expense')
+  ).reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
           <p className="text-gray-600 mt-1">View and manage financial transactions</p>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="btn btn-secondary">
-            <Filter className="h-4 w-4" />
-            Filter
-          </button>
           <button className="btn btn-primary">
             <Calendar className="h-4 w-4" />
             Add Transaction
@@ -92,133 +85,98 @@ const Transactions = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      {summaryData && (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          <div className="stat-card stat-card-success card-hover">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-2">Total Income</p>
-                <p className="text-3xl font-bold text-success-600">
-                  ৳{summaryData.summary?.totalIncome?.toLocaleString() || 0}
-                </p>
-                <div className="mt-3 flex items-center text-xs text-success-600">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  <span>12% from last month</span>
-                </div>
-              </div>
-              <div className="p-4 bg-success-50 rounded-2xl">
-                <TrendingUp className="h-8 w-8 text-success-600" />
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="stat-card stat-card-success card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Income</p>
+              <p className="text-3xl font-bold text-success-600">
+                {formatCurrency(incomeTotal)}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-success-600">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>Income transactions</span>
               </div>
             </div>
-          </div>
-          
-          <div className="stat-card stat-card-danger card-hover">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-2">Total Expenses</p>
-                <p className="text-3xl font-bold text-danger-600">
-                  ৳{summaryData.summary?.totalExpense?.toLocaleString() || 0}
-                </p>
-                <div className="mt-3 flex items-center text-xs text-danger-600">
-                  <TrendingDown className="h-3 w-3 mr-1" />
-                  <span>8% from last month</span>
-                </div>
-              </div>
-              <div className="p-4 bg-danger-50 rounded-2xl">
-                <TrendingDown className="h-8 w-8 text-danger-600" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="stat-card stat-card-primary card-hover">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-2">Net Balance</p>
-                <p className="text-3xl font-bold text-primary-600">
-                  ৳{((summaryData.summary?.totalIncome || 0) - (summaryData.summary?.totalExpense || 0)).toLocaleString()}
-                </p>
-                <div className="mt-3 flex items-center text-xs text-primary-600">
-                  <ArrowUpDown className="h-3 w-3 mr-1" />
-                  <span>Cash flow</span>
-                </div>
-              </div>
-              <div className="p-4 bg-primary-50 rounded-2xl">
-                <DollarSign className="h-8 w-8 text-primary-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="stat-card stat-card-warning card-hover">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-2">Transactions</p>
-                <p className="text-3xl font-bold text-warning-600">
-                  {transactionsData?.pagination?.total || 0}
-                </p>
-                <div className="mt-3 flex items-center text-xs text-warning-600">
-                  <Receipt className="h-3 w-3 mr-1" />
-                  <span>All time</span>
-                </div>
-              </div>
-              <div className="p-4 bg-warning-50 rounded-2xl">
-                <Receipt className="h-8 w-8 text-warning-600" />
-              </div>
+            <div className="p-4 bg-success-50 rounded-2xl">
+              <TrendingUp className="h-8 w-8 text-success-600" />
             </div>
           </div>
         </div>
-      )}
 
-      {/* Filters */}
-      <div className="card">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search transactions..."
-              className="input pl-12"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            )}
+        <div className="stat-card stat-card-danger card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Expenses</p>
+              <p className="text-3xl font-bold text-danger-600">
+                {formatCurrency(expenseTotal)}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-danger-600">
+                <TrendingDown className="h-3 w-3 mr-1" />
+                <span>Expense transactions</span>
+              </div>
+            </div>
+            <div className="p-4 bg-danger-50 rounded-2xl">
+              <TrendingDown className="h-8 w-8 text-danger-600" />
+            </div>
           </div>
-          
-          <div className="flex items-center space-x-3">
-            <select
-              className="select"
-              value={filters.type}
-              onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-            >
-              <option value="">All Types</option>
-              <option value="sale">Sales</option>
-              <option value="purchase">Purchases</option>
-              <option value="quick">Quick Sales</option>
-              <option value="payment_received">Payments Received</option>
-              <option value="payment_made">Payments Made</option>
-            </select>
-            
-            <select
-              className="select"
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-            >
-              <option value="">All Categories</option>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-            </select>
+        </div>
+
+        <div className="stat-card stat-card-primary card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Net Balance</p>
+              <p className="text-3xl font-bold text-primary-600">
+                {formatCurrency(incomeTotal - expenseTotal)}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-primary-600">
+                <span>Income - Expenses</span>
+              </div>
+            </div>
+            <div className="p-4 bg-primary-50 rounded-2xl">
+              <DollarSign className="h-8 w-8 text-primary-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-warning card-hover">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-2">Transactions</p>
+              <p className="text-3xl font-bold text-warning-600">
+                {transactionsData?.pagination?.total || 0}
+              </p>
+              <div className="mt-3 flex items-center text-xs text-warning-600">
+                <Receipt className="h-3 w-3 mr-1" />
+                <span>All time</span>
+              </div>
+            </div>
+            <div className="p-4 bg-warning-50 rounded-2xl">
+              <Receipt className="h-8 w-8 text-warning-600" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Transactions List */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex items-center space-x-3">
+          <input
+            type="date"
+            className="select"
+            value={filters.startDate}
+            onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+            placeholder="Start Date"
+          />
+          <input
+            type="date"
+            className="select"
+            value={filters.endDate}
+            onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+            placeholder="End Date"
+          />
+        </div>
+      </div>
+
       <div className="table-container">
         <div className="overflow-x-auto">
           <table className="table">
@@ -257,11 +215,11 @@ const Transactions = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <span className={transaction.category === 'income' ? 'text-green-600' : 'text-red-600'}>
-                      {transaction.category === 'income' ? '+' : '-'}৳{transaction.amount.toLocaleString()}
+                      {transaction.category === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {transaction.account.replace('_', ' ')}
+                    {transaction.account?.replace('_', ' ') || transaction.account}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {transaction.customer?.name || transaction.supplier?.name || '-'}
@@ -276,16 +234,15 @@ const Transactions = () => {
           <div className="text-center py-12">
             <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600">No transactions found</p>
-            <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters</p>
+            <p className="text-sm text-gray-500 mt-1">Try adjusting your date filters</p>
           </div>
         )}
       </div>
 
-      {/* Pagination */}
       {transactionsData?.pagination && (
         <div className="flex justify-between items-center">
           <div className="text-sm text-gray-700">
-            Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, transactionsData.pagination.total)} of{' '}
+            Showing {((currentPage - 1) * 15) + 1} to {Math.min(currentPage * 15, transactionsData.pagination.total)} of{' '}
             {transactionsData.pagination.total} results
           </div>
           <div className="flex gap-2">

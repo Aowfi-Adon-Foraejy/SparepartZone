@@ -48,21 +48,21 @@ router.get('/', adminOrStaff, [
       if (endDate) filters.date.$lte = new Date(endDate);
     }
 
-    let transactions;
+    let result;
     if (search) {
-      transactions = await Transaction.searchTransactions(search, filters);
+      result = await Transaction.searchTransactions(search, filters)
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
     } else {
-      transactions = Transaction.find(filters);
+      result = await Transaction.find(filters)
+        .populate('customer', 'name email')
+        .populate('supplier', 'name email')
+        .populate('reference')
+        .populate('createdBy', 'username')
+        .sort({ date: -1, createdAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
     }
-
-    const result = await transactions
-      .populate('customer', 'name email')
-      .populate('supplier', 'name email')
-      .populate('reference')
-      .populate('createdBy', 'username')
-      .sort({ date: -1, createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
 
     const total = search 
       ? (await Transaction.searchTransactions(search, filters)).length

@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../utils/currency';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   Truck, 
-  Search, 
   Plus, 
   Edit, 
   Trash2,
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 const Suppliers = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -28,10 +28,10 @@ const Suppliers = () => {
   const queryClient = useQueryClient();
 
   const { data: suppliersData, isLoading, error, refetch } = useQuery(
-    ['suppliers', currentPage, searchTerm],
+    ['suppliers', currentPage],
     async () => {
       const { data } = await api.get('/suppliers', {
-        params: { page: currentPage, search: searchTerm }
+        params: { page: currentPage, limit: 15 }
       });
       return data;
     },
@@ -198,7 +198,9 @@ const Suppliers = () => {
             <div>
               <p className="text-sm font-medium text-gray-600 mb-2">Total Payables</p>
               <p className="text-3xl font-bold text-warning-600">
-                ৳{(suppliersData?.stats?.totalPayables || 0).toLocaleString()}
+                {formatCurrency(suppliersData?.suppliers?.reduce((sum, supplier) => 
+                  sum + (supplier.financials?.outstandingPayable || 0), 0
+                ) || 0)}
               </p>
               <div className="mt-3 flex items-center text-xs text-warning-600">
                 <DollarSign className="h-3 w-3 mr-1" />
@@ -230,39 +232,7 @@ const Suppliers = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="flex items-center space-x-4 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search suppliers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-3 w-full sm:w-80 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            )}
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <button className="btn btn-secondary">
-            Filter
-          </button>
-          <button className="btn btn-primary">
-            <Plus className="h-4 w-4" />
-            Add Supplier
-          </button>
-        </div>
-      </div>
+
 
       {/* Suppliers Table */}
       <div className="table-container">
@@ -308,7 +278,7 @@ const Suppliers = () => {
                   <td className="table-cell">
                     <div className="text-left">
                       <p className="font-semibold text-primary-600">
-                        ৳{(supplier.financials?.totalPurchased || 0).toLocaleString()}
+                        {formatCurrency(supplier.financials?.totalPurchased || 0)}
                       </p>
                       <p className="text-xs text-gray-500">Total purchases</p>
                     </div>
@@ -318,7 +288,7 @@ const Suppliers = () => {
                       <p className={`font-semibold ${
                         (supplier.financials?.outstandingPayable || 0) > 0 ? 'text-warning-600' : 'text-success-600'
                       }`}>
-                        ৳{(supplier.financials?.outstandingPayable || 0).toLocaleString()}
+                        {formatCurrency(supplier.financials?.outstandingPayable || 0)}
                       </p>
                       <p className="text-xs text-gray-500">Outstanding</p>
                     </div>
@@ -384,8 +354,8 @@ const Suppliers = () => {
       {suppliersData?.pagination?.pages > 1 && (
         <div className="flex justify-between items-center">
           <div className="text-sm text-gray-700">
-            Showing {((suppliersData.pagination.page - 1) * suppliersData.pagination.limit) + 1} to{' '}
-            {Math.min(suppliersData.pagination.page * suppliersData.pagination.limit, suppliersData.pagination.total)} of{' '}
+            Showing {((suppliersData.pagination.page - 1) * 15) + 1} to{' '}
+            {Math.min(suppliersData.pagination.page * 15, suppliersData.pagination.total)} of{' '}
             {suppliersData.pagination.total} results
           </div>
           <div className="flex gap-2">

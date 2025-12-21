@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'react-query';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../utils/currency';
 
 const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -269,7 +270,7 @@ const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>৳{subtotal.toLocaleString()}</span>
+                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-gray-700">Discount:</label>
@@ -293,7 +294,7 @@ const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total:</span>
-                  <span>৳{total.toLocaleString()}</span>
+                   <span>{formatCurrency(total)}</span>
                 </div>
               </div>
             </div>
@@ -326,7 +327,7 @@ const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
                     min="0"
                     max={total}
                   />
-                  <p className="text-sm text-gray-500">Due: ৳{(total - formData.paymentAmount).toLocaleString()}</p>
+                   <p className="text-sm text-gray-500">Due: {formatCurrency(total - formData.paymentAmount)}</p>
                 </div>
               </div>
             </div>

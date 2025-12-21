@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'react-query';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../utils/currency';
 
 const QuickInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -170,7 +171,7 @@ const QuickInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
             <div className="border border-gray-200 rounded-lg p-4 bg-green-50">
               <div className="flex justify-between items-center">
                 <h3 className="font-medium text-gray-900 mb-3">Total Amount (Cash Payment)</h3>
-                <span className="text-2xl font-bold text-green-600">৳{total.toLocaleString()}</span>
+                 <span className="text-2xl font-bold text-green-600">{formatCurrency(total)}</span>
               </div>
               <p className="text-sm text-gray-600 mt-2">This quick invoice records an immediate cash sale.</p>
             </div>
