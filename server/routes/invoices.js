@@ -415,9 +415,12 @@ router.post('/sales', adminOrStaff, [
 
 // Add Payment to Invoice
 router.post('/:id/payments', adminOrStaff, [
-  body('amount').isNumeric({ min: 0 }).withMessage('Payment amount must be positive'),
+  body('amount').isFloat({ min: 0 }).withMessage('Payment amount must be positive'),
   body('method').isIn(['cash', 'bank_transfer', 'card', 'cheque', 'mobile_money']).withMessage('Invalid payment method')
 ], async (req, res) => {
+  console.log('=== Add Payment Request ===');
+  console.log('Invoice ID:', req.params.id);
+  console.log('Request body:', req.body);
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -435,6 +438,7 @@ router.post('/:id/payments', adminOrStaff, [
     const { amount, method, reference = '', notes = '' } = req.body;
 
     if (amount > invoice.getAmountDue()) {
+      console.log('Payment amount validation failed:', { amount, dueAmount: invoice.getAmountDue() });
       return res.status(400).json({ message: 'Payment amount exceeds due amount' });
     }
 
