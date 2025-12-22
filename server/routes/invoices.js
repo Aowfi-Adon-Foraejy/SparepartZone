@@ -490,8 +490,18 @@ router.post('/:id/payments', adminOrStaff, [
       await invoice.supplier.updateFinancials(0, paymentAmount);
     }
 
-    // Create transaction
-    await Transaction.createTransaction({
+    // Get account balance before creating transaction
+    const account = invoice.type === 'sale' ? 'cash' : 'payables';
+    const lastTransaction = await Transaction.findOne({ account })
+      .sort({ date: -1, createdAt: -1 });
+    
+    const balanceBefore = lastTransaction ? lastTransaction.balanceAfter : 0;
+    const balanceAfter = invoice.type === 'sale' 
+      ? balanceBefore + paymentAmount  // income increases cash
+      : balanceBefore - paymentAmount; // expense decreases payables
+
+    // Create transaction with balance fields
+    await Transaction.create({
       type: invoice.type === 'sale' ? 'payment_received' : 'payment_made',
       category: invoice.type === 'sale' ? 'income' : 'expense',
       amount: paymentAmount,
@@ -501,7 +511,9 @@ router.post('/:id/payments', adminOrStaff, [
       customer: invoice.customer?._id,
       supplier: invoice.supplier?._id,
       paymentMethod: paymentMethod,
-      account: invoice.type === 'sale' ? 'cash' : 'payables',
+      account: account,
+      balanceBefore: balanceBefore,
+      balanceAfter: balanceAfter,
       createdBy: req.user._id
     });
 

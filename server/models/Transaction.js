@@ -94,9 +94,9 @@ transactionSchema.index({ supplier: 1, date: -1 });
 transactionSchema.index({ account: 1, date: -1 });
 transactionSchema.index({ isManual: 1 });
 
-transactionSchema.pre('save', function(next) {
+transactionSchema.pre('save', async function(next) {
   if (this.isNew) {
-    this.setBalanceFields();
+    await this.setBalanceFields();
   }
   next();
 });
