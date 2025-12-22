@@ -404,6 +404,22 @@ router.post('/sales', adminOrStaff, [
       );
     }
 
+    // Create transaction for the sale
+    await Transaction.createTransaction({
+      type: 'sale',
+      category: 'income',
+      amount: calculatedTotal,
+      description: `Sales invoice: ${invoice.invoiceNumber}`,
+      reference: invoice._id,
+      referenceModel: 'Invoice',
+      customer: customerDoc._id,
+      paymentMethod: paymentMethod || 'cash',
+      account: 'cash',
+      balanceBefore: 0,
+      balanceAfter: calculatedTotal,
+      createdBy: req.user._id
+    });
+
     // Update customer financials
     try {
       await customerDoc.updateFinancials(calculatedTotal, paymentAmount);
