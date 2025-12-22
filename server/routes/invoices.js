@@ -501,9 +501,7 @@ router.post('/:id/payments', adminOrStaff, [
       customer: invoice.customer?._id,
       supplier: invoice.supplier?._id,
       paymentMethod: paymentMethod,
-      account: invoice.type === 'sale' ? 'cash' : 'bank_account',
-      balanceBefore: 0,
-      balanceAfter: paymentAmount,
+      account: invoice.type === 'sale' ? 'cash' : 'payables',
       createdBy: req.user._id
     });
 
