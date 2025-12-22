@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }) => {
       
       // Check if token is expired before making request
       if (token && tokenManager.isTokenExpired(token)) {
-        console.log('Token expired, attempting refresh...');
+
         await refreshToken();
         // Retry fetchUser with new token
         return fetchUser();
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken && (error.response?.status === 401 || error.response?.status === 403)) {
         try {
-          console.log('Attempting to refresh token...');
+
           await refreshToken();
           // Retry fetchUser with new token
           return fetchUser();
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       
-      console.log('Refreshing token...');
+
       const response = await axios.post('/api/auth/refresh', { refreshToken });
       const { accessToken, refreshToken: newRefreshToken } = response.data;
       
@@ -138,7 +138,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('refreshToken', newRefreshToken);
       axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
       
-      console.log('Token refreshed successfully');
+
       dispatch({ type: 'TOKEN_REFRESHED', payload: { accessToken, refreshToken: newRefreshToken } });
     } catch (error) {
       console.error('Token refresh failed:', error);
@@ -245,13 +245,13 @@ export const useAuthWithRefresh = () => {
         async () => {
           try {
             await refreshToken();
-            console.log('Auto refresh successful');
+
           } catch (error) {
             console.error('Auto refresh failed:', error);
           }
         },
         () => {
-          console.log('Stopping auto refresh');
+
         }
       );
     }

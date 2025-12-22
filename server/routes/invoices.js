@@ -257,7 +257,7 @@ router.post('/sales', adminOrStaff, [
       return res.status(400).json({ errors: errors.array(), message: 'Validation failed' });
     }
 
-    console.log('Sales invoice request body:', req.body);
+
     const { 
       customer, 
       isNewCustomer = false, 
@@ -650,7 +650,7 @@ router.post('/purchases', adminOrStaff, [
       return res.status(400).json({ errors: errors.array(), message: 'Validation failed' });
     }
 
-    console.log('Purchase invoice request body:', req.body);
+
     const { 
       supplier, 
       isNewSupplier = false, 
@@ -851,7 +851,7 @@ router.post('/quick', adminOrStaff, [
       return res.status(400).json({ errors: errors.array(), message: 'Validation failed' });
     }
 
-    console.log('Quick invoice request body:', req.body);
+
     const { 
       customerInfo, 
       items, 

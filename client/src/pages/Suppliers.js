@@ -267,7 +267,7 @@ const Suppliers = () => {
       <div className="table-container">
         <div className="overflow-x-auto">
           <table className="table">
-            <thead className="table-header">
+            <thead className="table-header sticky top-0 z-10 bg-gray-50 shadow-sm">
               <tr>
                 <th className="table-header-cell">Supplier</th>
                 <th className="table-header-cell">Contact</th>
@@ -278,8 +278,8 @@ const Suppliers = () => {
               </tr>
             </thead>
             <tbody className="table-body">
-              {suppliersData?.suppliers?.map((supplier) => (
-                <tr key={supplier._id} className="table-row group">
+{suppliersData?.suppliers?.map((supplier, index) => (
+                 <tr key={supplier._id} className={`table-row group ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors duration-150`}>
                   <td className="table-cell">
                     <div className="flex items-center space-x-3">
                       <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Fragment } from 'react';
-import { FileText, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Plus, Edit, Download, X, Receipt, ShoppingCart } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Plus, Edit, Download, X, Receipt, ShoppingCart, Printer } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -89,7 +89,7 @@ const Invoices = () => {
       onSuccess: (data) => {
         const invoiceTypeName = data.invoice.type === 'quick' ? 'Quick' : 
                                 data.invoice.type === 'sale' ? 'Sales' : 'Purchase';
-        toast.success(`${invoiceTypeName} invoice created successfully`);
+        toast.success(`${invoiceTypeName} invoice created successfully!`);
         setShowCreateModal(false);
         setInvoiceType('sale');
         // Invalidate all relevant queries for global state refresh
@@ -138,7 +138,7 @@ const Invoices = () => {
     },
     {
       onSuccess: () => {
-        toast.success('PDF downloaded successfully');
+        toast.success('PDF downloaded successfully!');
       },
       onError: () => {
         toast.error('Failed to download PDF');
@@ -154,7 +154,7 @@ const Invoices = () => {
     },
     {
       onSuccess: () => {
-        toast.success('Payment added successfully');
+        toast.success('Payment added successfully!');
         setSelectedInvoice(null);
         setShowQuickPaymentModal(false);
         // Invalidate all relevant queries for global state refresh
@@ -182,7 +182,7 @@ const Invoices = () => {
     },
     {
       onSuccess: () => {
-        toast.success('Invoice updated successfully');
+        toast.success('Invoice updated successfully!');
         setSelectedInvoice(null);
         setShowEditModal(false);
         // Invalidate all relevant queries for global state refresh
@@ -214,6 +214,40 @@ const Invoices = () => {
 
   const handleDownloadPDF = (invoiceId) => {
     downloadPDFMutation.mutate(invoiceId);
+  };
+
+  const handlePrintInvoice = (invoice) => {
+    // Create a simple printable version
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice ${invoice.invoiceNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .invoice-info { margin-bottom: 30px; }
+            .item { margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; }
+            .total { font-weight: bold; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Invoice #${invoice.invoiceNumber}</h1>
+            <p>Date: ${new Date(invoice.date).toLocaleDateString()}</p>
+            <p>Type: ${invoice.type}</p>
+          </div>
+          <div class="invoice-info">
+            <p>${activeTab === 'sales' || activeTab === 'quick' ? 'Customer' : 'Supplier'}: ${activeTab === 'sales' || activeTab === 'quick' ? invoice.customer?.name : invoice.supplier?.name}</p>
+            <p>Total: ৳${(invoice.total || 0).toLocaleString()}</p>
+            <p>Paid: ৳${(invoice.amountPaid || invoice.paid || 0).toLocaleString()}</p>
+            <p class="total">Due: ৳${(invoice.amountDue || Math.max(0, (invoice.total || 0) - (invoice.amountPaid || invoice.paid || 0))).toLocaleString()}</p>
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const getStatusColor = (status) => {
@@ -582,7 +616,7 @@ const Invoices = () => {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Invoice
@@ -611,8 +645,8 @@ const Invoices = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentData?.invoices?.map((invoice) => (
-                  <tr key={invoice._id} className="hover:bg-gray-50">
+                {currentData?.invoices?.map((invoice, index) => (
+                  <tr key={invoice._id} className={`hover:bg-gray-50 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} transition-colors duration-150`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</div>
@@ -670,13 +704,20 @@ const Invoices = () => {
                             <DollarSign className="h-4 w-4" />
                           </button>
                         )}
-                        <button
-                          onClick={() => handleDownloadPDF(invoice._id)}
-                          className="text-gray-600 hover:text-gray-900"
-                          title="Download PDF"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
+<button
+                            onClick={() => handleDownloadPDF(invoice._id)}
+                            className="text-gray-600 hover:text-gray-900"
+                            title="Download PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handlePrintInvoice(invoice)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Print Invoice"
+                          >
+                            <Printer className="h-4 w-4" />
+                          </button>
                       </div>
                     </td>
                   </tr>

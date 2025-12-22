@@ -324,7 +324,7 @@ if (isLoading) {
             {invoicesData?.invoices?.slice(0, 5).length > 0 ? (
               invoicesData.invoices.slice(0, 5).map((sale, index) => (
                 <div 
-                  key={sale.id} 
+                  key={sale._id} 
                   className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group animate-slide-up"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
@@ -367,7 +367,7 @@ if (isLoading) {
             {purchaseInvoicesData?.invoices?.slice(0, 5).length > 0 ? (
               purchaseInvoicesData.invoices.slice(0, 5).map((purchase, index) => (
                 <div 
-                  key={purchase.id} 
+                  key={purchase._id} 
                   className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group animate-slide-up"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >

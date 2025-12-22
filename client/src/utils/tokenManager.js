@@ -46,7 +46,7 @@ export const tokenManager = {
     setInterval(async () => {
       const token = localStorage.getItem('accessToken');
       if (token && tokenManager.shouldRefreshToken(token)) {
-        console.log('Auto-refreshing token...');
+
         try {
           await refreshCallback();
         } catch (error) {

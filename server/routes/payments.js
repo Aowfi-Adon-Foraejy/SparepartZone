@@ -24,15 +24,13 @@ router.post('/quick', adminOrStaff, [
 
     // Create a transaction record for the quick payment
     const transaction = new Transaction({
-      type: 'payment',
-      category: type === 'walkin' ? 'other_income' : 'payment',
+      type: type === 'walkin' ? 'payment_received' : 'payment_made',
+      category: type === 'walkin' ? 'income' : 'expense',
       amount: parseFloat(amount),
       description: notes || `Quick payment - ${method}`,
       reference,
-      method,
+      paymentMethod: method,
       account: 'cash',
-      balanceBefore: 0,
-      balanceAfter: parseFloat(amount),
       createdBy: req.user._id
     });
 

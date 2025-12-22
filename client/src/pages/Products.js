@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { toast } from 'react-hot-toast';
 import { getLowStockProducts } from '../utils/financialSummary';
 import { 
   Package, 
@@ -83,8 +84,10 @@ const Products = () => {
       queryClient.invalidateQueries('products');
       queryClient.invalidateQueries('dashboard-products');
       queryClient.invalidateQueries('low-stock-products');
+      toast.success('Product added successfully!');
     } catch (error) {
       console.error('Error adding product:', error);
+      toast.error(error.response?.data?.message || 'Failed to add product');
     }
   };
 
@@ -98,8 +101,10 @@ const Products = () => {
       queryClient.invalidateQueries('products');
       queryClient.invalidateQueries('dashboard-products');
       queryClient.invalidateQueries('low-stock-products');
+      toast.success('Product updated successfully!');
     } catch (error) {
       console.error('Error updating product:', error);
+      toast.error(error.response?.data?.message || 'Failed to update product');
     }
   };
 
@@ -112,8 +117,10 @@ const Products = () => {
         queryClient.invalidateQueries('products');
         queryClient.invalidateQueries('dashboard-products');
         queryClient.invalidateQueries('low-stock-products');
+        toast.success('Product deleted successfully!');
       } catch (error) {
         console.error('Error deleting product:', error);
+        toast.error(error.response?.data?.message || 'Failed to delete product');
       }
     }
   };
@@ -216,14 +223,15 @@ const Products = () => {
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-3 w-full sm:w-80 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+              className="pl-12 pr-12 py-3 w-full sm:w-80 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-3 h-5 w-5 text-gray-400 hover:text-gray-600 bg-white rounded-full flex items-center justify-center transition-colors duration-200 hover:bg-gray-100"
+                title="Clear search"
               >
-                ×
+                <X className="h-3 w-3" />
               </button>
             )}
           </div>
@@ -236,7 +244,7 @@ const Products = () => {
       <div className="table-container">
         <div className="overflow-x-auto">
           <table className="table">
-            <thead className="table-header">
+            <thead className="table-header sticky top-0 z-10 bg-gray-50 shadow-sm">
               <tr>
                 <th className="table-header-cell">Product</th>
                 <th className="table-header-cell">SKU</th>
@@ -249,8 +257,8 @@ const Products = () => {
               </tr>
             </thead>
             <tbody className="table-body">
-              {filteredProducts.map((product) => (
-                <tr key={product._id} className="table-row group">
+              {filteredProducts.map((product, index) => (
+                <tr key={product._id} className={`table-row group ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors duration-150`}>
                   <td className="table-cell">
                     <div className="flex items-center space-x-3">
                       <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">

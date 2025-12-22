@@ -85,7 +85,7 @@ const SalesInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
       delete submitData.customerInfo;
     }
 
-    console.log('Submitting sales invoice data:', submitData);
+
     onSubmit(submitData);
   };
 

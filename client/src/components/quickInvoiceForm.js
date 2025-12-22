@@ -52,7 +52,7 @@ const QuickInvoiceForm = ({ onSubmit, onCancel, isLoading }) => {
       }
     };
 
-    console.log('Submitting quick invoice:', submitData);
+
     onSubmit(submitData);
   };
 

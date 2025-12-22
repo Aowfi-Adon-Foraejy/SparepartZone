@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/currency';
-import { calculateCustomerDues } from '../utils/financialSummary';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { calculateCustomerDues } from '../utils/financialSummary';
 import { 
   Users, 
   Plus, 
@@ -107,7 +107,7 @@ const Customers = () => {
     try {
       await api.post('/customers', customerData);
       setShowAddModal(false);
-      toast.success('Customer created successfully');
+      toast.success('Customer created successfully!');
       // Invalidate all relevant queries for global state refresh
       queryClient.invalidateQueries('customers');
       queryClient.invalidateQueries('dashboard-customers');
@@ -126,7 +126,7 @@ const Customers = () => {
       await api.put(`/customers/${selectedCustomer._id}`, customerData);
       setShowEditModal(false);
       setSelectedCustomer(null);
-      toast.success('Customer updated successfully');
+      toast.success('Customer updated successfully!');
       // Invalidate all relevant queries for global state refresh
       queryClient.invalidateQueries('customers');
       queryClient.invalidateQueries('dashboard-customers');
@@ -144,7 +144,7 @@ const Customers = () => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
       try {
         await api.delete(`/customers/${customerId}`);
-        toast.success('Customer deleted successfully');
+        toast.success('Customer deleted successfully!');
         // Invalidate all relevant queries for global state refresh
         queryClient.invalidateQueries('customers');
         queryClient.invalidateQueries('dashboard-customers');
@@ -281,7 +281,7 @@ const Customers = () => {
       <div className="table-container">
         <div className="overflow-x-auto">
           <table className="table">
-            <thead className="table-header">
+            <thead className="table-header sticky top-0 z-10 bg-gray-50 shadow-sm">
               <tr>
                 <th className="table-header-cell">Customer</th>
                 <th className="table-header-cell">Contact</th>
@@ -292,8 +292,8 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody className="table-body">
-              {customers?.map((customer) => (
-                <tr key={customer._id} className="table-row group">
+              {customers?.map((customer, index) => (
+                <tr key={customer._id} className={`table-row group ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors duration-150`}>
                   <td className="table-cell">
                     <div className="flex items-center space-x-3">
                       <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -512,7 +512,7 @@ const Customers = () => {
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Invoice ID
@@ -535,8 +535,8 @@ const Customers = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {customerInvoicesData?.invoices?.map((invoice) => (
-                        <tr key={invoice._id} className="hover:bg-gray-50">
+{customerInvoicesData?.invoices?.map((invoice, index) => (
+                         <tr key={invoice._id} className={`hover:bg-gray-50 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} transition-colors duration-150`}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</div>
                             <div className="text-sm text-gray-500">{invoice.type}</div>

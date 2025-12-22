@@ -17,7 +17,7 @@ router.post('/', adminOrStaff, [
   body('creditLimit').optional().isNumeric({ min: 0 }).withMessage('Credit limit must be positive')
 ], async (req, res) => {
   try {
-    console.log('Supplier creation request body:', JSON.stringify(req.body, null, 2));
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('Validation errors:', errors.array());

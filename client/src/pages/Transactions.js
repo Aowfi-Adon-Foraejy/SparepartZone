@@ -175,7 +175,7 @@ const Transactions = () => {
       <div className="table-container">
         <div className="overflow-x-auto">
           <table className="table">
-            <thead className="table-header">
+            <thead className="table-header sticky top-0 z-10 bg-gray-50 shadow-sm">
               <tr>
                 <th className="table-header-cell">Date</th>
                 <th className="table-header-cell">Type</th>
@@ -187,8 +187,8 @@ const Transactions = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {transactionsData?.transactions?.map((transaction) => (
-                <tr key={transaction._id} className="hover:bg-gray-50">
+{transactionsData?.transactions?.map((transaction, index) => (
+                 <tr key={transaction._id} className={`hover:bg-gray-50 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} transition-colors duration-150`}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(transaction.date).toLocaleDateString()}
                   </td>
