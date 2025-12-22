@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useQuery } from 'react-query';
+import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getFinancialSummary, calculateCustomerDues, calculateSupplierPayables, getAccountBalances, getLowStockProducts } from '../utils/financialSummary';
 import {
   TrendingUp,
   TrendingDown,
@@ -62,58 +64,89 @@ const StatCard = ({ title, value, icon: Icon, change, changeType, color = 'prima
 };
 
 const Dashboard = () => {
-  const [overview, setOverview] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Fetch all data needed for unified financial calculations
+  const { data: transactionsData, isLoading: transactionsLoading } = useQuery(
+    'dashboard-transactions',
+    async () => {
+      const { data } = await api.get('/transactions', { params: { limit: 100 } });
+      return data;
+    },
+    { staleTime: 30000 }
+  );
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const { data } = await axios.get('/api/dashboard/overview');
-        setOverview(data);
-      } catch (err) {
-        console.error('Dashboard API error:', err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { data: invoicesData, isLoading: invoicesLoading } = useQuery(
+    'dashboard-invoices',
+    async () => {
+      const { data } = await api.get('/invoices/sales', { params: { limit: 100 } });
+      return data;
+    },
+    { staleTime: 30000 }
+  );
 
-    fetchDashboard();
-    
-    // Set up periodic refresh
-    const interval = setInterval(fetchDashboard, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const { data: purchaseInvoicesData, isLoading: purchaseInvoicesLoading } = useQuery(
+    'dashboard-purchase-invoices',
+    async () => {
+      const { data } = await api.get('/invoices/purchases', { params: { limit: 100 } });
+      return data;
+    },
+    { staleTime: 30000 }
+  );
 
-  if (isLoading) {
+  const { data: productsData, isLoading: productsLoading } = useQuery(
+    'dashboard-products',
+    async () => {
+      const { data } = await api.get('/products', { params: { limit: 100 } });
+      return data;
+    },
+    { staleTime: 30000 }
+  );
+
+  const { data: customersData, isLoading: customersLoading } = useQuery(
+    'dashboard-customers',
+    async () => {
+      const { data } = await api.get('/customers', { params: { limit: 100 } });
+      return data;
+    },
+    { staleTime: 30000 }
+  );
+
+  const { data: suppliersData, isLoading: suppliersLoading } = useQuery(
+    'dashboard-suppliers',
+    async () => {
+      const { data } = await api.get('/suppliers', { params: { limit: 100 } });
+      return data;
+    },
+    { staleTime: 30000 }
+  );
+
+  const isLoading = transactionsLoading || invoicesLoading || purchaseInvoicesLoading || 
+                   productsLoading || customersLoading || suppliersLoading;
+
+  // Calculate unified financial summary
+  const financialSummary = getFinancialSummary(transactionsData?.transactions || []);
+  const accountBalances = getAccountBalances(transactionsData?.transactions || []);
+  
+  // Calculate customer dues dynamically
+  const totalCustomerDues = (customersData?.customers || []).reduce((sum, customer) => {
+    const customerInvoices = [...(invoicesData?.invoices || []), ...(purchaseInvoicesData?.invoices || [])];
+    return sum + calculateCustomerDues(customerInvoices, customer.name);
+  }, 0);
+
+  // Calculate supplier payables dynamically
+  const totalSupplierPayables = (suppliersData?.suppliers || []).reduce((sum, supplier) => {
+    const purchaseInvoices = purchaseInvoicesData?.invoices || [];
+    return sum + calculateSupplierPayables(purchaseInvoices, supplier.name);
+  }, 0);
+
+  // Product statistics
+  const totalProducts = productsData?.products?.length || 0;
+  const lowStockItems = getLowStockProducts(productsData?.products || []);
+
+  const error = null;
+
+if (isLoading) {
     return <LoadingSpinner />;
   }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load dashboard</h3>
-          <p className="text-gray-600">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 btn btn-primary"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const { overview: stats, recentActivity, financialSummary } = overview || {
-    overview: {},
-    recentActivity: {},
-    financialSummary: {}
-  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -135,7 +168,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Sales"
-          value={`৳${stats?.totalSales?.toLocaleString() || 0}`}
+          value={`৳${financialSummary.totalSales.toLocaleString()}`}
           icon={DollarSign}
           color="green"
           change={15.3}
@@ -143,44 +176,44 @@ const Dashboard = () => {
         />
         <StatCard
           title="Total Purchases"
-          value={`৳${stats?.totalPurchases?.toLocaleString() || 0}`}
+          value={`৳${financialSummary.totalPurchases.toLocaleString()}`}
           icon={Truck}
           change={8.1}
           changeType="increase"
         />
         <StatCard
           title="Total Products"
-          value={overview?.products?.length || 0}
+          value={totalProducts}
           icon={Package}
           color="primary"
         />
         <StatCard
           title="Low Stock Items"
-          value={overview?.products?.filter(p => p.stock?.current <= p.stock?.reorderThreshold)?.length || 0}
+          value={lowStockItems}
           icon={AlertTriangle}
           color="yellow"
         />
         <StatCard
           title="Total Customers"
-          value={overview?.customers?.length || 0}
+          value={customersData?.customers?.length || 0}
           icon={Users}
           color="blue"
         />
         <StatCard
           title="Total Suppliers"
-          value={overview?.suppliers?.length || 0}
+          value={suppliersData?.suppliers?.length || 0}
           icon={Truck}
           color="primary"
         />
         <StatCard
           title="Customer Dues"
-          value={`৳${stats?.totalCustomerDues?.toLocaleString() || 0}`}
+          value={`৳${totalCustomerDues.toLocaleString()}`}
           icon={DollarSign}
           color="red"
         />
         <StatCard
           title="Supplier Payables"
-          value={`৳${stats?.totalSupplierPayables?.toLocaleString() || 0}`}
+          value={`৳${totalSupplierPayables.toLocaleString()}`}
           icon={DollarSign}
           color="yellow"
         />
@@ -194,8 +227,8 @@ const Dashboard = () => {
             <span className="badge badge-success">Live</span>
           </div>
           <div className="space-y-3">
-            {recentActivity?.recentSales?.length > 0 ? (
-              recentActivity.recentSales.map((sale, index) => (
+            {invoicesData?.invoices?.slice(0, 5).length > 0 ? (
+              invoicesData.invoices.slice(0, 5).map((sale, index) => (
                 <div 
                   key={sale.id} 
                   className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group animate-slide-up"
@@ -206,8 +239,8 @@ const Dashboard = () => {
                       <TrendingUp className="h-5 w-5 text-success-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{sale.invoiceNumber}</p>
-                      <p className="text-xs text-gray-500">{sale.customer}</p>
+<p className="text-sm font-semibold text-gray-900">{sale.invoiceNumber}</p>
+                        <p className="text-xs text-gray-500">{sale.customer?.name || 'N/A'}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -233,8 +266,8 @@ const Dashboard = () => {
             <span className="badge badge-primary">Live</span>
           </div>
           <div className="space-y-3">
-            {recentActivity?.recentPurchases?.length > 0 ? (
-              recentActivity.recentPurchases.map((purchase, index) => (
+            {purchaseInvoicesData?.invoices?.slice(0, 5).length > 0 ? (
+              purchaseInvoicesData.invoices.slice(0, 5).map((purchase, index) => (
                 <div 
                   key={purchase.id} 
                   className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group animate-slide-up"
@@ -246,7 +279,7 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{purchase.invoiceNumber}</p>
-                      <p className="text-xs text-gray-500">{purchase.supplier}</p>
+                      <p className="text-xs text-gray-500">{purchase.supplier?.name || 'N/A'}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -283,10 +316,10 @@ const Dashboard = () => {
             </div>
             <p className="text-sm font-medium text-success-700 mb-2">Total Sales</p>
             <p className="text-3xl font-bold text-success-600 mb-2">
-              ৳{financialSummary?.salesStats?.totalSales?.toLocaleString() || 0}
+              ৳{financialSummary.totalSales.toLocaleString()}
             </p>
             <p className="text-xs text-success-600">
-              {financialSummary?.salesStats?.count || 0} transactions
+              {financialSummary.salesCount} transactions
             </p>
           </div>
           <div className="text-center p-6 bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-2xl border border-primary-200/50">
@@ -295,10 +328,10 @@ const Dashboard = () => {
             </div>
             <p className="text-sm font-medium text-primary-700 mb-2">Total Purchases</p>
             <p className="text-3xl font-bold text-primary-600 mb-2">
-              ৳{financialSummary?.purchaseStats?.totalPurchases?.toLocaleString() || 0}
+              ৳{financialSummary.totalPurchases.toLocaleString()}
             </p>
             <p className="text-xs text-primary-600">
-              {financialSummary?.purchaseStats?.count || 0} transactions
+              {financialSummary.purchaseCount} transactions
             </p>
           </div>
           <div className="text-center p-6 bg-gradient-to-br from-secondary-50 to-secondary-100/50 rounded-2xl border border-secondary-200/50">
@@ -307,7 +340,7 @@ const Dashboard = () => {
             </div>
             <p className="text-sm font-medium text-secondary-700 mb-2">Net Profit</p>
             <p className="text-3xl font-bold text-secondary-600 mb-2">
-              ৳{((financialSummary?.salesStats?.totalSales || 0) - (financialSummary?.purchaseStats?.totalPurchases || 0)).toLocaleString()}
+              ৳{(financialSummary.totalSales - financialSummary.totalPurchases).toLocaleString()}
             </p>
             <p className="text-xs text-secondary-600">
               Sales - Purchases
@@ -323,7 +356,7 @@ const Dashboard = () => {
           <button className="btn btn-ghost btn-sm">View All</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {financialSummary?.accountBalances?.map((account, index) => (
+          {accountBalances.slice(0, 4).map((account, index) => (
             <div 
               key={account.account} 
               className="p-4 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl border border-gray-200/50 hover:shadow-medium transition-all duration-200 cursor-pointer animate-slide-up"

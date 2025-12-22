@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/currency';
+import { calculateCustomerDues } from '../utils/financialSummary';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   Users, 
@@ -51,6 +52,25 @@ const Customers = () => {
     }
   );
 
+  const { data: allInvoicesData } = useQuery(
+    'all-invoices-for-customers',
+    async () => {
+      try {
+        const [salesResponse, purchaseResponse] = await Promise.all([
+          api.get('/invoices/sales', { params: { limit: 100 } }),
+          api.get('/invoices/purchases', { params: { limit: 100 } })
+        ]);
+        return {
+          invoices: [...(salesResponse.data.invoices || []), ...(purchaseResponse.data.invoices || [])]
+        };
+      } catch (error) {
+        console.error('Failed to fetch invoices:', error);
+        return { invoices: [] };
+      }
+    },
+    { staleTime: 30000 }
+  );
+
   const { data: customerInvoicesData } = useQuery(
     ['customer-invoices', selectedCustomer?._id],
     async () => {
@@ -88,7 +108,13 @@ const Customers = () => {
       await api.post('/customers', customerData);
       setShowAddModal(false);
       toast.success('Customer created successfully');
+      // Invalidate all relevant queries for global state refresh
       queryClient.invalidateQueries('customers');
+      queryClient.invalidateQueries('dashboard-customers');
+      queryClient.invalidateQueries('dashboard-transactions');
+      queryClient.invalidateQueries('dashboard-invoices');
+      queryClient.invalidateQueries('all-invoices-for-customers');
+      queryClient.invalidateQueries('transactions');
     } catch (error) {
       console.error('Error adding customer:', error);
       toast.error(error.response?.data?.message || 'Failed to create customer');
@@ -101,7 +127,13 @@ const Customers = () => {
       setShowEditModal(false);
       setSelectedCustomer(null);
       toast.success('Customer updated successfully');
+      // Invalidate all relevant queries for global state refresh
       queryClient.invalidateQueries('customers');
+      queryClient.invalidateQueries('dashboard-customers');
+      queryClient.invalidateQueries('dashboard-transactions');
+      queryClient.invalidateQueries('dashboard-invoices');
+      queryClient.invalidateQueries('all-invoices-for-customers');
+      queryClient.invalidateQueries('transactions');
     } catch (error) {
       console.error('Error updating customer:', error);
       toast.error(error.response?.data?.message || 'Failed to update customer');
@@ -113,7 +145,13 @@ const Customers = () => {
       try {
         await api.delete(`/customers/${customerId}`);
         toast.success('Customer deleted successfully');
+        // Invalidate all relevant queries for global state refresh
         queryClient.invalidateQueries('customers');
+        queryClient.invalidateQueries('dashboard-customers');
+        queryClient.invalidateQueries('dashboard-transactions');
+        queryClient.invalidateQueries('dashboard-invoices');
+        queryClient.invalidateQueries('all-invoices-for-customers');
+        queryClient.invalidateQueries('transactions');
       } catch (error) {
         console.error('Error deleting customer:', error);
         toast.error(error.response?.data?.message || 'Failed to delete customer');
@@ -159,8 +197,11 @@ const Customers = () => {
         <div className="stat-card stat-card-danger card-hover">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Overdue Accounts</p>
-              <p className="text-3xl font-bold text-danger-600">{customersData?.stats?.totalDues || 0}</p>
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Customer Dues</p>
+              <p className="text-3xl font-bold text-danger-600">
+                {formatCurrency((customers || []).reduce((sum, customer) => 
+                  sum + calculateCustomerDues(allInvoicesData?.invoices || [], customer.name), 0))}
+              </p>
               <div className="mt-3 flex items-center text-xs text-danger-600">
                 <TrendingDown className="h-3 w-3 mr-1" />
                 <span>Requires attention</span>
@@ -287,9 +328,9 @@ const Customers = () => {
                   <td className="table-cell">
                     <div className="text-left">
                       <p className={`font-semibold ${
-                        (customer.financials?.outstandingDue || 0) > 0 ? 'text-danger-600' : 'text-success-600'
+                        calculateCustomerDues(allInvoicesData?.invoices || [], customer.name) > 0 ? 'text-danger-600' : 'text-success-600'
                       }`}>
-                        {formatCurrency(customer.financials?.outstandingDue || 0)}
+                        {formatCurrency(calculateCustomerDues(allInvoicesData?.invoices || [], customer.name))}
                       </p>
                       {customer.creditLimit > 0 && (
                         <p className="text-xs text-gray-500">Limit: {formatCurrency(customer.creditLimit)}</p>
@@ -455,9 +496,9 @@ const Customers = () => {
                   <div>
                     <p className="text-sm text-gray-500">Outstanding Due</p>
                     <p className={`font-semibold ${
-                      (selectedCustomer.financials?.outstandingDue || 0) > 0 ? 'text-danger-600' : 'text-success-600'
+                      calculateCustomerDues(allInvoicesData?.invoices || [], selectedCustomer.name) > 0 ? 'text-danger-600' : 'text-success-600'
                     }`}>
-                      {formatCurrency(selectedCustomer.financials?.outstandingDue || 0)}
+                      {formatCurrency(calculateCustomerDues(allInvoicesData?.invoices || [], selectedCustomer.name))}
                     </p>
                   </div>
                 </div>
@@ -507,21 +548,21 @@ const Customers = () => {
                             <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.total || 0)}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.paid || 0)}</div>
+                            <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.amountPaid || 0)}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <div className="text-sm font-medium text-gray-900">
-                              {formatCurrency(Math.max(0, (invoice.total || 0) - (invoice.paid || 0)))}
+                              {formatCurrency(invoice.amountDue || 0)}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-3 py-1 text-xs rounded-full ${
-                              Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) === 0 ? 'bg-green-100 text-green-800' :
-                              Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) < (invoice.total || 0) && (invoice.paid || 0) > 0 ? 'bg-yellow-100 text-yellow-800' :
+                              invoice.paymentStatus === 'fully_paid' ? 'bg-green-100 text-green-800' :
+                              invoice.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-red-100 text-red-800'
                             }`}>
-                              {Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) === 0 ? 'Paid' :
-                               Math.max(0, (invoice.total || 0) - (invoice.paid || 0)) < (invoice.total || 0) && (invoice.paid || 0) > 0 ? 'Partially Paid' : 'Unpaid'}
+                              {invoice.paymentStatus === 'fully_paid' ? 'Paid' :
+                               invoice.paymentStatus === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
                             </span>
                           </td>
                         </tr>

@@ -3,6 +3,7 @@ import { useQuery } from 'react-query';
 import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/currency';
+import { getFinancialSummary } from '../utils/financialSummary';
 import { 
   Receipt, 
   TrendingUp, 
@@ -62,13 +63,7 @@ const Transactions = () => {
 
   if (isLoading) return <LoadingSpinner />;
 
-  const incomeTotal = transactionsData?.transactions?.filter(t => 
-    (t.type === 'sale' || t.type === 'payment_received' || t.category === 'income')
-  ).reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
-
-  const expenseTotal = transactionsData?.transactions?.filter(t => 
-    (t.type === 'purchase' || t.type === 'payment_made' || t.category === 'expense')
-  ).reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+  const financialSummary = getFinancialSummary(transactionsData?.transactions || []);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -89,13 +84,13 @@ const Transactions = () => {
         <div className="stat-card stat-card-success card-hover">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Income</p>
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Sales</p>
               <p className="text-3xl font-bold text-success-600">
-                {formatCurrency(incomeTotal)}
+                {formatCurrency(financialSummary.totalSales)}
               </p>
               <div className="mt-3 flex items-center text-xs text-success-600">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                <span>Income transactions</span>
+                <span>{financialSummary.salesCount} sales transactions</span>
               </div>
             </div>
             <div className="p-4 bg-success-50 rounded-2xl">
@@ -107,13 +102,13 @@ const Transactions = () => {
         <div className="stat-card stat-card-danger card-hover">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Expenses</p>
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Purchases</p>
               <p className="text-3xl font-bold text-danger-600">
-                {formatCurrency(expenseTotal)}
+                {formatCurrency(financialSummary.totalPurchases)}
               </p>
               <div className="mt-3 flex items-center text-xs text-danger-600">
                 <TrendingDown className="h-3 w-3 mr-1" />
-                <span>Expense transactions</span>
+                <span>{financialSummary.purchaseCount} purchase transactions</span>
               </div>
             </div>
             <div className="p-4 bg-danger-50 rounded-2xl">
@@ -127,10 +122,10 @@ const Transactions = () => {
             <div>
               <p className="text-sm font-medium text-gray-600 mb-2">Net Balance</p>
               <p className="text-3xl font-bold text-primary-600">
-                {formatCurrency(incomeTotal - expenseTotal)}
+                {formatCurrency(financialSummary.netBalance)}
               </p>
               <div className="mt-3 flex items-center text-xs text-primary-600">
-                <span>Income - Expenses</span>
+                <span>Sales - Purchases</span>
               </div>
             </div>
             <div className="p-4 bg-primary-50 rounded-2xl">

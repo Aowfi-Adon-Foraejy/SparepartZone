@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/currency';
+import { calculateSupplierPayables } from '../utils/financialSummary';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   Truck, 
@@ -50,6 +51,20 @@ const Suppliers = () => {
     }
   );
 
+  const { data: purchaseInvoicesData } = useQuery(
+    'supplier-purchase-invoices',
+    async () => {
+      try {
+        const { data } = await api.get('/invoices/purchases', { params: { limit: 100 } });
+        return data;
+      } catch (error) {
+        console.error('Failed to fetch purchase invoices:', error);
+        return { invoices: [] };
+      }
+    },
+    { staleTime: 30000 }
+  );
+
   const { data: stats } = useQuery(
     'supplier-stats',
     async () => {
@@ -63,7 +78,12 @@ const Suppliers = () => {
     {
       onSuccess: () => {
         toast.success('Supplier deleted successfully');
+        // Invalidate all relevant queries for global state refresh
         queryClient.invalidateQueries('suppliers');
+        queryClient.invalidateQueries('dashboard-suppliers');
+        queryClient.invalidateQueries('dashboard-purchase-invoices');
+        queryClient.invalidateQueries('supplier-purchase-invoices');
+        queryClient.invalidateQueries('transactions');
       },
       onError: () => {
         toast.error('Failed to delete supplier');
@@ -208,9 +228,8 @@ const Suppliers = () => {
             <div>
               <p className="text-sm font-medium text-gray-600 mb-2">Total Payables</p>
               <p className="text-3xl font-bold text-warning-600">
-                {formatCurrency(suppliersData?.suppliers?.reduce((sum, supplier) => 
-                  sum + (supplier.financials?.outstandingPayable || 0), 0
-                ) || 0)}
+                {formatCurrency((suppliersData?.suppliers || []).reduce((sum, supplier) => 
+                  sum + calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name), 0))}
               </p>
               <div className="mt-3 flex items-center text-xs text-warning-600">
                 <DollarSign className="h-3 w-3 mr-1" />
@@ -296,9 +315,9 @@ const Suppliers = () => {
                   <td className="table-cell">
                     <div className="text-left">
                       <p className={`font-semibold ${
-                        (supplier.financials?.outstandingPayable || 0) > 0 ? 'text-warning-600' : 'text-success-600'
+                        calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name) > 0 ? 'text-warning-600' : 'text-success-600'
                       }`}>
-                        {formatCurrency(supplier.financials?.outstandingPayable || 0)}
+                        {formatCurrency(calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name))}
                       </p>
                       <p className="text-xs text-gray-500">Outstanding</p>
                     </div>
@@ -306,23 +325,23 @@ const Suppliers = () => {
                   <td className="table-cell">
                     <span className={`badge ${
                       getPaymentStatus(
-                        supplier.financials?.outstandingPayable || 0,
+                        calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name),
                         supplier.lastPurchaseDate,
                         supplier.paymentTerms
                       ) === 'paid' ? 'badge-success' :
                       getPaymentStatus(
-                        supplier.financials?.outstandingPayable || 0,
+                        calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name),
                         supplier.lastPurchaseDate,
                         supplier.paymentTerms
                       ) === 'current' ? 'badge-success' :
                       getPaymentStatus(
-                        supplier.financials?.outstandingPayable || 0,
+                        calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name),
                         supplier.lastPurchaseDate,
                         supplier.paymentTerms
                       ) === 'due-soon' ? 'badge-warning' : 'badge-danger'
                     }`}>
                       {getPaymentStatus(
-                        supplier.financials?.outstandingPayable || 0,
+                        calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name),
                         supplier.lastPurchaseDate,
                         supplier.paymentTerms
                       )}
@@ -395,7 +414,12 @@ const Suppliers = () => {
               await api.post('/suppliers', formData);
               toast.success('Supplier created successfully');
               setShowAddModal(false);
+              // Invalidate all relevant queries for global state refresh
               queryClient.invalidateQueries('suppliers');
+              queryClient.invalidateQueries('dashboard-suppliers');
+              queryClient.invalidateQueries('dashboard-purchase-invoices');
+              queryClient.invalidateQueries('supplier-purchase-invoices');
+              queryClient.invalidateQueries('transactions');
             } catch (error) {
               toast.error(error.response?.data?.message || 'Failed to create supplier');
             }
@@ -413,7 +437,12 @@ const Suppliers = () => {
               toast.success('Supplier updated successfully');
               setShowEditModal(false);
               setSelectedSupplier(null);
+              // Invalidate all relevant queries for global state refresh
               queryClient.invalidateQueries('suppliers');
+              queryClient.invalidateQueries('dashboard-suppliers');
+              queryClient.invalidateQueries('dashboard-purchase-invoices');
+              queryClient.invalidateQueries('supplier-purchase-invoices');
+              queryClient.invalidateQueries('transactions');
             } catch (error) {
               toast.error(error.response?.data?.message || 'Failed to update supplier');
             }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getLowStockProducts } from '../utils/financialSummary';
 import { 
   Package, 
   Search, 
@@ -47,13 +48,7 @@ const Products = () => {
     }
   );
 
-  const { data: lowStockData } = useQuery(
-    'low-stock-products',
-    async () => {
-      const { data } = await api.get('/products/low-stock');
-      return data;
-    }
-  );
+  
 
   if (isLoading) return <LoadingSpinner />;
   if (error) {
@@ -84,7 +79,9 @@ const Products = () => {
       await api.post('/products', productData);
       setShowAddModal(false);
       refetch();
+      // Invalidate all relevant queries for global state refresh
       queryClient.invalidateQueries('products');
+      queryClient.invalidateQueries('dashboard-products');
       queryClient.invalidateQueries('low-stock-products');
     } catch (error) {
       console.error('Error adding product:', error);
@@ -97,7 +94,9 @@ const Products = () => {
       setShowEditModal(false);
       setSelectedProduct(null);
       refetch();
+      // Invalidate all relevant queries for global state refresh
       queryClient.invalidateQueries('products');
+      queryClient.invalidateQueries('dashboard-products');
       queryClient.invalidateQueries('low-stock-products');
     } catch (error) {
       console.error('Error updating product:', error);
@@ -109,6 +108,10 @@ const Products = () => {
       try {
         await api.delete(`/products/${productId}`);
         refetch();
+        // Invalidate all relevant queries for global state refresh
+        queryClient.invalidateQueries('products');
+        queryClient.invalidateQueries('dashboard-products');
+        queryClient.invalidateQueries('low-stock-products');
       } catch (error) {
         console.error('Error deleting product:', error);
       }
@@ -154,7 +157,7 @@ const Products = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 mb-2">Low Stock Items</p>
-              <p className="text-3xl font-bold text-warning-600">{lowStockData?.lowStockCount || 0}</p>
+              <p className="text-3xl font-bold text-warning-600">{getLowStockProducts(products)}</p>
               <div className="mt-3 flex items-center text-xs text-warning-600">
                 <AlertTriangle className="h-3 w-3 mr-1" />
                 <span>Requires attention</span>

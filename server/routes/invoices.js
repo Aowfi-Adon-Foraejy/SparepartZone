@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const { body, query, validationResult } = require('express-validator');
 const path = require('path');
 const Invoice = require('../models/Invoice');
 const Customer = require('../models/Customer');
@@ -14,8 +14,16 @@ const router = express.Router();
 
 router.use(auth);
 
-router.get('/sales', adminOrStaff, async (req, res) => {
+router.get('/sales', adminOrStaff, [
+  query('limit').optional().isInt({ min: 1, max: 100 }),
+  query('page').optional().isInt({ min: 1 })
+], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { page = 1, limit = 20, status, startDate, endDate, search } = req.query;
     
     const filters = { type: 'sale' };
@@ -66,8 +74,16 @@ router.get('/sales', adminOrStaff, async (req, res) => {
   }
 });
 
-router.get('/purchases', adminOrStaff, async (req, res) => {
+router.get('/purchases', adminOrStaff, [
+  query('limit').optional().isInt({ min: 1, max: 100 }),
+  query('page').optional().isInt({ min: 1 })
+], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { page = 1, limit = 20, status, startDate, endDate, search } = req.query;
     
     const filters = { type: 'purchase' };
@@ -391,9 +407,16 @@ router.post('/sales', adminOrStaff, [
     // Update customer financials
     try {
       await customerDoc.updateFinancials(calculatedTotal, paymentAmount);
+      console.log('Customer financials updated successfully:', {
+        customerId: customerDoc._id,
+        totalBilled: calculatedTotal,
+        paymentAmount,
+        newOutstandingDue: customerDoc.financials.outstandingDue
+      });
       await req.user.updateActivity('sales');
     } catch (error) {
       console.error('Error updating customer financials:', error);
+      // Don't fail the whole invoice creation for financials update error
     }
 
     const populatedInvoice = await Invoice.findById(invoice._id)
@@ -415,8 +438,8 @@ router.post('/sales', adminOrStaff, [
 
 // Add Payment to Invoice
 router.post('/:id/payments', adminOrStaff, [
-  body('amount').isFloat({ min: 0 }).withMessage('Payment amount must be positive'),
-  body('method').isIn(['cash', 'bank_transfer', 'card', 'cheque', 'mobile_money']).withMessage('Invalid payment method')
+  body('paymentAmount').isFloat({ min: 0 }).withMessage('Payment amount must be positive'),
+  body('paymentMethod').isIn(['cash', 'bank_transfer', 'card', 'cheque', 'mobile_money']).withMessage('Invalid payment method')
 ], async (req, res) => {
   console.log('=== Add Payment Request ===');
   console.log('Invoice ID:', req.params.id);
@@ -435,36 +458,36 @@ router.post('/:id/payments', adminOrStaff, [
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    const { amount, method, reference = '', notes = '' } = req.body;
+    const { paymentAmount, paymentMethod, reference = '', notes = '' } = req.body;
 
-    if (amount > invoice.getAmountDue()) {
-      console.log('Payment amount validation failed:', { amount, dueAmount: invoice.getAmountDue() });
+    if (paymentAmount > invoice.getAmountDue()) {
+      console.log('Payment amount validation failed:', { paymentAmount, dueAmount: invoice.getAmountDue() });
       return res.status(400).json({ message: 'Payment amount exceeds due amount' });
     }
 
-    await invoice.addPayment(amount, method, req.user._id, reference, notes);
+    await invoice.addPayment(paymentAmount, paymentMethod, req.user._id, reference, notes);
 
     // Update customer/supplier financials
     if (invoice.customer) {
-      await invoice.customer.updateFinancials(0, amount);
+      await invoice.customer.updateFinancials(0, paymentAmount);
     } else if (invoice.supplier) {
-      await invoice.supplier.updateFinancials(0, amount);
+      await invoice.supplier.updateFinancials(0, paymentAmount);
     }
 
     // Create transaction
     await Transaction.createTransaction({
       type: invoice.type === 'sale' ? 'payment' : 'payment',
       category: invoice.type === 'sale' ? 'income' : 'expense',
-      amount: amount,
+      amount: paymentAmount,
       description: `Payment for ${invoice.invoiceNumber}`,
       reference: invoice._id,
       referenceModel: 'Invoice',
       customer: invoice.customer?._id,
       supplier: invoice.supplier?._id,
-      paymentMethod: method,
+      paymentMethod: paymentMethod,
       account: invoice.type === 'sale' ? 'cash' : 'payables',
       balanceBefore: 0,
-      balanceAfter: amount,
+      balanceAfter: paymentAmount,
       createdBy: req.user._id
     });
 
@@ -949,7 +972,17 @@ router.post('/quick', adminOrStaff, [
     }
 
     // Update customer financials
-    await customerDoc.updateFinancials(calculatedSubtotal, paymentAmount);
+    try {
+      await customerDoc.updateFinancials(calculatedSubtotal, paymentAmount);
+      console.log('Quick invoice customer financials updated successfully:', {
+        customerId: customerDoc._id,
+        totalBilled: calculatedSubtotal,
+        paymentAmount,
+        newOutstandingDue: customerDoc.financials.outstandingDue
+      });
+    } catch (error) {
+      console.error('Error updating quick invoice customer financials:', error);
+    }
 
     // Create transaction
     await Transaction.createTransaction({

@@ -6,6 +6,7 @@ import api from '../utils/api';
 import { toast } from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/currency';
+import { calculatePaymentStatus } from '../utils/financialSummary';
 import SalesInvoiceForm from '../components/SalesInvoiceForm';
 import PurchaseInvoiceForm from '../components/purchaseInvoiceForm';
 import QuickInvoiceForm from '../components/quickInvoiceForm';
@@ -67,6 +68,8 @@ const Invoices = () => {
     }
   );
 
+  
+
   // Create invoice mutation
   const createInvoiceMutation = useMutation(
     async (invoiceData) => {
@@ -89,10 +92,20 @@ const Invoices = () => {
         toast.success(`${invoiceTypeName} invoice created successfully`);
         setShowCreateModal(false);
         setInvoiceType('sale');
+        // Invalidate all relevant queries for global state refresh
         queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'quick-invoices', 'overdue-invoices']);
         queryClient.invalidateQueries('customers');
         queryClient.invalidateQueries('suppliers');
         queryClient.invalidateQueries('products');
+        queryClient.invalidateQueries('dashboard-transactions');
+        queryClient.invalidateQueries('dashboard-invoices');
+        queryClient.invalidateQueries('dashboard-purchase-invoices');
+        queryClient.invalidateQueries('dashboard-products');
+        queryClient.invalidateQueries('dashboard-customers');
+        queryClient.invalidateQueries('dashboard-suppliers');
+        queryClient.invalidateQueries('all-invoices-for-customers');
+        queryClient.invalidateQueries('supplier-purchase-invoices');
+        queryClient.invalidateQueries('transactions');
       },
       onError: (error) => {
         toast.error(error.response?.data?.message || 'Failed to create invoice');
@@ -144,8 +157,16 @@ const Invoices = () => {
         toast.success('Payment added successfully');
         setSelectedInvoice(null);
         setShowQuickPaymentModal(false);
+        // Invalidate all relevant queries for global state refresh
         queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'quick-invoices', 'overdue-invoices']);
         queryClient.invalidateQueries('customers');
+        queryClient.invalidateQueries('dashboard-transactions');
+        queryClient.invalidateQueries('dashboard-invoices');
+        queryClient.invalidateQueries('dashboard-purchase-invoices');
+        queryClient.invalidateQueries('dashboard-customers');
+        queryClient.invalidateQueries('all-invoices-for-customers');
+        queryClient.invalidateQueries('supplier-purchase-invoices');
+        queryClient.invalidateQueries('transactions');
       },
       onError: (error) => {
         toast.error(error.response?.data?.message || 'Failed to add payment');
@@ -164,8 +185,16 @@ const Invoices = () => {
         toast.success('Invoice updated successfully');
         setSelectedInvoice(null);
         setShowEditModal(false);
+        // Invalidate all relevant queries for global state refresh
         queryClient.invalidateQueries(['sales-invoices', 'purchase-invoices', 'quick-invoices', 'overdue-invoices']);
         queryClient.invalidateQueries('customer-invoices');
+        queryClient.invalidateQueries('dashboard-transactions');
+        queryClient.invalidateQueries('dashboard-invoices');
+        queryClient.invalidateQueries('dashboard-purchase-invoices');
+        queryClient.invalidateQueries('dashboard-customers');
+        queryClient.invalidateQueries('all-invoices-for-customers');
+        queryClient.invalidateQueries('supplier-purchase-invoices');
+        queryClient.invalidateQueries('transactions');
       },
       onError: (error) => {
         toast.error(error.response?.data?.message || 'Failed to update invoice');
@@ -200,6 +229,11 @@ const Invoices = () => {
     }
   };
 
+  const getPaymentStatusForInvoice = (invoice) => {
+    const calculatedStatus = calculatePaymentStatus(invoice);
+    return calculatedStatus;
+  };
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -210,6 +244,15 @@ const Invoices = () => {
   const isLoading = activeTab === 'sales' ? salesLoading : 
                      activeTab === 'purchases' ? purchaseLoading : 
                      activeTab === 'quick' ? quickLoading : false;
+
+  // Calculate unpaid invoices from current data
+  const unpaidInvoices = currentData?.invoices?.filter(invoice => 
+    getPaymentStatusForInvoice(invoice) === 'unpaid'
+  ) || [];
+
+  const partiallyPaidInvoices = currentData?.invoices?.filter(invoice => 
+    getPaymentStatusForInvoice(invoice) === 'partially_paid'
+  ) || [];
 
   const totalPages = currentData?.pagination?.pages || 0;
   const displayedPages = [];
@@ -284,17 +327,17 @@ const Invoices = () => {
               >
                 Cancel
               </button>
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                onClick={() => {
-                  handleAddPayment({
-                    paymentAmount: amountDue,
-                    paymentMethod: 'cash'
-                  });
-                }}
-              >
-                Pay Full Amount Due
-            </button>
+               <button
+                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                 onClick={() => {
+                   handleAddPayment({
+                     paymentAmount: amountDue,
+                     paymentMethod: 'cash'
+                   });
+                 }}
+               >
+                 Pay Full Amount Due
+               </button>
           </div>
         </div>
       </div>
@@ -346,6 +389,40 @@ const Invoices = () => {
         </div>
       </div>
 
+      {/* Unpaid Invoices Flash Card */}
+      {unpaidInvoices.length > 0 && (
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-6 animate-pulse">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-red-800">Payment Reminder</h3>
+                <p className="text-red-600">
+                  You have <span className="font-bold">{unpaidInvoices.length}</span> unpaid invoice{unpaidInvoices.length > 1 ? 's' : ''} 
+                  {partiallyPaidInvoices.length > 0 && ` and ${partiallyPaidInvoices.length} partially paid`} that require attention
+                </p>
+                <div className="mt-2 text-sm text-red-500">
+                  Total unpaid amount: ৳{unpaidInvoices.reduce((sum, inv) => sum + (inv.amountDue || 0), 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const firstUnpaid = unpaidInvoices[0];
+                setSelectedInvoice(firstUnpaid);
+                setShowQuickPaymentModal(true);
+              }}
+              className="btn btn-danger flex-shrink-0"
+            >
+              <DollarSign className="h-4 w-4 mr-2" />
+              Collect Payment
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="stat-card stat-card-primary card-hover">
@@ -371,7 +448,7 @@ const Invoices = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Paid</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
-                {currentData?.invoices?.filter(inv => inv.paymentStatus === 'fully_paid' || (inv.amountDue !== undefined && inv.amountDue <= 0)).length || 0}
+                {currentData?.invoices?.filter(inv => getPaymentStatusForInvoice(inv) === 'fully_paid').length || 0}
               </p>
             </div>
             <div className="p-3 bg-green-50 rounded-full">
@@ -385,7 +462,7 @@ const Invoices = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Partially Paid</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
-                {currentData?.invoices?.filter(inv => inv.paymentStatus === 'partially_paid' || (inv.amountDue > 0 && (inv.amountPaid || inv.paid || 0) > 0)).length || 0}
+                {currentData?.invoices?.filter(inv => getPaymentStatusForInvoice(inv) === 'partially_paid').length || 0}
               </p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-full">
@@ -397,9 +474,9 @@ const Invoices = () => {
         <div className="stat-card stat-card-red">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Overdue</p>
+              <p className="text-sm font-medium text-gray-600">Unpaid</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
-                {overdueData?.overdueInvoices?.length || 0}
+                {unpaidInvoices.length}
               </p>
             </div>
             <div className="p-3 bg-red-50 rounded-full">
@@ -412,6 +489,35 @@ const Invoices = () => {
 
 
 
+
+      {/* Unpaid Summary Row */}
+      {unpaidInvoices.length > 0 && (
+        <div className="bg-gradient-to-r from-red-100 to-orange-100 border border-red-200 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-center">
+              <p className="text-sm font-medium text-red-700">Total Unpaid Amount</p>
+              <p className="text-2xl font-bold text-red-800">
+                ৳{unpaidInvoices.reduce((sum, inv) => sum + (inv.amountDue || Math.max(0, (inv.total || 0) - (inv.amountPaid || inv.paid || 0))), 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-orange-700">Partially Paid Amount</p>
+              <p className="text-2xl font-bold text-orange-800">
+                ৳{partiallyPaidInvoices.reduce((sum, inv) => sum + (inv.amountDue || Math.max(0, (inv.total || 0) - (inv.amountPaid || inv.paid || 0))), 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="text-center">
+              <button
+                onClick={() => setActiveTab('sales')}
+                className="btn btn-primary"
+              >
+                <Receipt className="h-4 w-4 mr-2" />
+                View All Invoices
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
@@ -521,25 +627,23 @@ const Invoices = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{new Date(invoice.date).toLocaleDateString()}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.total || 0)}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                      {formatCurrency(invoice.total || 0)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.amountPaid || invoice.paid || 0)}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                      {formatCurrency(invoice.amountPaid || invoice.paid || 0)}
                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                       <div className="text-sm font-medium text-gray-900">
-                         {formatCurrency(invoice.amountDue || Math.max(0, (invoice.total || 0) - (invoice.amountPaid || invoice.paid || 0)))}
-                       </div>
+                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                       {formatCurrency(invoice.amountDue || Math.max(0, (invoice.total || 0) - (invoice.amountPaid || invoice.paid || 0)))}
                      </td>
                      <td className="px-6 py-4 whitespace-nowrap">
                        <span className={`px-3 py-1 text-xs rounded-full ${
-                         invoice.paymentStatus === 'fully_paid' ? 'bg-green-100 text-green-800' :
-                         invoice.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
+                         getPaymentStatusForInvoice(invoice) === 'fully_paid' ? 'bg-green-100 text-green-800' :
+                         getPaymentStatusForInvoice(invoice) === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
                          'bg-red-100 text-red-800'
                        }`}>
-                         {invoice.paymentStatus === 'fully_paid' ? 'Paid' :
-                          invoice.paymentStatus === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
+                         {getPaymentStatusForInvoice(invoice) === 'fully_paid' ? 'Paid' :
+                          getPaymentStatusForInvoice(invoice) === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
                        </span>
                      </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -554,16 +658,18 @@ const Invoices = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </button>
-                        <button
-                          onClick={() => {
-                            setSelectedInvoice(invoice);
-                            setShowQuickPaymentModal(true);
-                          }}
-                          className="text-green-600 hover:text-green-900"
-                          title="Add Payment"
-                        >
-                          <DollarSign className="h-4 w-4" />
-                        </button>
+                        {invoice.paymentStatus !== 'fully_paid' && (
+                          <button
+                            onClick={() => {
+                              setSelectedInvoice(invoice);
+                              setShowQuickPaymentModal(true);
+                            }}
+                            className="text-green-600 hover:text-green-900"
+                            title="Add Payment"
+                          >
+                            <DollarSign className="h-4 w-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDownloadPDF(invoice._id)}
                           className="text-gray-600 hover:text-gray-900"
@@ -705,8 +811,37 @@ const Invoices = () => {
                   <div className="flex justify-between font-bold text-lg border-t pt-2">
                     <span>Total:</span>
                     <span>{formatCurrency(selectedInvoice.total || 0)}</span>
-                  </div>
-                </div>
+</div>
+
+      {/* Unpaid Summary Row */}
+      {unpaidInvoices.length > 0 && (
+        <div className="bg-gradient-to-r from-red-100 to-orange-100 border border-red-200 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-center">
+              <p className="text-sm font-medium text-red-700">Total Unpaid Amount</p>
+              <p className="text-2xl font-bold text-red-800">
+                ৳{unpaidInvoices.reduce((sum, inv) => sum + (inv.amountDue || Math.max(0, (inv.total || 0) - (inv.amountPaid || inv.paid || 0))), 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-orange-700">Partially Paid Amount</p>
+              <p className="text-2xl font-bold text-orange-800">
+                ৳{partiallyPaidInvoices.reduce((sum, inv) => sum + (inv.amountDue || Math.max(0, (inv.total || 0) - (inv.amountPaid || inv.paid || 0))), 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="text-center">
+              <button
+                onClick={() => setActiveTab('sales')}
+                className="btn btn-primary"
+              >
+                <Receipt className="h-4 w-4 mr-2" />
+                View All Invoices
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
