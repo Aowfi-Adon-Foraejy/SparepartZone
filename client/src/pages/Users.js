@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/currency';
@@ -18,81 +19,119 @@ import {
 import { toast } from 'react-hot-toast';
 
 const UserManagement = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   
-  // Mock user data - in real app this would come from API
-  const mockUsers = [
-    {
-      _id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+8801234567890',
-      role: 'admin',
-      isActive: true,
-      isApproved: true,
-      joinDate: '2024-01-15',
-      salary: 50000
+  const isAdmin = user?.role === 'admin';
+
+  // Fetch users from API
+  const { data: usersData, isLoading, refetch } = useQuery(
+    ['users', statusFilter, searchTerm],
+    async () => {
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (searchTerm) params.append('search', searchTerm);
+      
+      const response = await api.get(`/users?${params.toString()}`);
+      return response.data;
     },
     {
-      _id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '+8801234567891',
-      role: 'staff',
-      isActive: true,
-      isApproved: false,
-      joinDate: '2024-02-20',
-      salary: 30000
-    },
-    {
-      _id: '3',
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      phone: '+8801234567892',
-      role: 'staff',
-      isActive: false,
-      isApproved: true,
-      joinDate: '2024-03-10',
-      salary: 32000
+      enabled: isAdmin // Only fetch if user is admin
     }
-  ];
+  );
 
-  const [users, setUsers] = useState(mockUsers);
-  const [currentUser, setCurrentUser] = useState({ role: 'admin' }); // Mock current user
-  
-  // In a real app, this would come from auth context
-  const isAdmin = currentUser?.role === 'admin';
+const approveUserMutation = useMutation(
+    async (userId) => {
+      const response = await api.post(`/users/${userId}/approve`);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        toast.success('User approved successfully!');
+        queryClient.invalidateQueries('users');
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to approve user');
+      }
+    }
+  );
 
-  const handleApprove = async (userId) => {
+  const deactivateUserMutation = useMutation(
+    async (userId) => {
+      const response = await api.post(`/users/${userId}/deactivate`);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        toast.success('User deactivated successfully!');
+        queryClient.invalidateQueries('users');
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to deactivate user');
+      }
+    }
+  );
+
+  const activateUserMutation = useMutation(
+    async (userId) => {
+      const response = await api.post(`/users/${userId}/activate`);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        toast.success('User activated successfully!');
+        queryClient.invalidateQueries('users');
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to activate user');
+      }
+    }
+  );
+
+  const deleteUserMutation = useMutation(
+    async (userId) => {
+      await api.delete(`/users/${userId}`);
+    },
+    {
+      onSuccess: () => {
+        toast.success('User deleted successfully!');
+        queryClient.invalidateQueries('users');
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to delete user');
+      }
+    }
+  );
+
+  const handleApprove = (userId) => {
+    if (!isAdmin) return;
+    approveUserMutation.mutate(userId);
+  };
+
+const handleDeactivate = (userId) => {
     if (!isAdmin) return;
     
-    try {
-      // In a real app, this would call the API
-      // await api.patch(`/users/${userId}/approve`);
-      setUsers(prev => prev.map(user => 
-        user._id === userId ? { ...user, isApproved: true } : user
-      ));
-      toast.success('User approved successfully');
-    } catch (error) {
-      toast.error('Failed to approve user');
+    if (window.confirm('Are you sure you want to deactivate this user?')) {
+      deactivateUserMutation.mutate(userId);
     }
   };
 
-  const handleRemove = async (userId) => {
+  const handleActivate = (userId) => {
+    if (!isAdmin) return;
+    activateUserMutation.mutate(userId);
+  };
+
+  const handleDelete = (userId) => {
     if (!isAdmin) return;
     
-    if (window.confirm('Are you sure you want to remove this user?')) {
-      try {
-        // In a real app, this would call the API
-        // await api.delete(`/users/${userId}`);
-        setUsers(prev => prev.filter(user => user._id !== userId));
-        toast.success('User removed successfully');
-      } catch (error) {
-        toast.error('Failed to remove user');
-      }
+    if (window.confirm('Are you sure you want to delete this user? This cannot be undone.')) {
+      deleteUserMutation.mutate(userId);
     }
   };
 
@@ -115,29 +154,139 @@ const UserManagement = () => {
     return 'bg-green-100 text-green-800';
   };
 
-  const filteredUsers = users;
+  const filteredUsers = usersData?.users || [];
 
-  if (false) { // isLoading check for real API
+  if (isLoading) {
     return <LoadingSpinner />;
   }
 
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600 mt-1">Manage staff accounts and permissions</p>
         </div>
-        {currentUser.role === 'admin' && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn btn-primary"
-          >
-            <Plus className="h-4 w-4" />
-            Add User
-          </button>
+        {isAdmin && (
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="btn btn-primary"
+            >
+              <Plus className="h-4 w-4" />
+              Add User
+            </button>
+          </div>
         )}
+      </div>
+
+      {/* Stats Cards */}
+      {usersData?.stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="stat-card stat-card-success">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Admins</p>
+                <p className="text-2xl font-bold text-gray-900">{usersData.stats.activeAdmins}</p>
+              </div>
+              <div className="p-3 bg-red-50 rounded-full">
+                <Shield className="h-6 w-6 text-red-600" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="stat-card stat-card-primary">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Staff</p>
+                <p className="text-2xl font-bold text-gray-900">{usersData.stats.activeStaff}</p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-full">
+                <UsersIcon className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="stat-card stat-card-yellow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Approval</p>
+                <p className="text-2xl font-bold text-gray-900">{usersData.stats.pendingStaff}</p>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-full">
+                <XCircle className="h-6 w-6 text-yellow-600" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="stat-card stat-card-red">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Inactive Users</p>
+                <p className="text-2xl font-bold text-gray-900">{usersData.stats.inactiveUsers}</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-full">
+                <XCircle className="h-6 w-6 text-gray-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+        <div className="flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="Search users by name, email, or username..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input w-full"
+          />
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`px-4 py-2 rounded-lg border transition-colors ${
+              statusFilter === 'all' 
+                ? 'bg-primary-100 border-primary-300 text-primary-700' 
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setStatusFilter('active')}
+            className={`px-4 py-2 rounded-lg border transition-colors ${
+              statusFilter === 'active' 
+                ? 'bg-primary-100 border-primary-300 text-primary-700' 
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Active
+          </button>
+          <button
+            onClick={() => setStatusFilter('pending')}
+            className={`px-4 py-2 rounded-lg border transition-colors ${
+              statusFilter === 'pending' 
+                ? 'bg-yellow-100 border-yellow-300 text-yellow-700' 
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Pending
+          </button>
+          <button
+            onClick={() => setStatusFilter('inactive')}
+            className={`px-4 py-2 rounded-lg border transition-colors ${
+              statusFilter === 'inactive' 
+                ? 'bg-red-100 border-red-300 text-red-700' 
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Inactive
+          </button>
+        </div>
       </div>
 
 
@@ -166,8 +315,10 @@ const UserManagement = () => {
                         <UsersIcon className="h-5 w-5 text-gray-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{user.name}</p>
-                        <p className="text-xs text-gray-500">ID: {user._id}</p>
+                        <p className="font-medium text-gray-900">
+                          {user.profile ? `${user.profile.firstName} ${user.profile.lastName}` : user.username}
+                        </p>
+                        <p className="text-xs text-gray-500">@{user.username}</p>
                       </div>
                     </div>
                   </td>
@@ -179,7 +330,7 @@ const UserManagement = () => {
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-900">{user.phone}</span>
+                        <span className="text-gray-900">{user.profile?.phone || user.phone}</span>
                       </div>
                     </div>
                   </td>
@@ -195,27 +346,47 @@ const UserManagement = () => {
                   </td>
                   <td className="table-cell">
                     <div className="text-sm text-gray-900">
-                      {new Date(user.joinDate).toLocaleDateString()}
+                      {new Date(user.createdAt).toLocaleDateString()}
                     </div>
                   </td>
                   <td className="table-cell">
                     <div className="text-sm font-medium text-gray-900">
-                      {formatCurrency(user.salary)}
+                      {formatCurrency(user.salary?.base || 0)}
                     </div>
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      {currentUser.role === 'admin' && (
+                      {isAdmin && (
                         <>
                           {!user.isApproved && (
                             <button
                               onClick={() => handleApprove(user._id)}
                               className="p-2 text-success-600 hover:bg-success-50 rounded-lg transition-colors duration-200"
                               title="Approve"
+                              disabled={approveUserMutation.isLoading}
                             >
                               <CheckCircle className="h-4 w-4" />
                             </button>
                           )}
+                          {user.isApproved && user.isActive ? (
+                            <button
+                              onClick={() => handleDeactivate(user._id)}
+                              className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
+                              title="Deactivate"
+                              disabled={deactivateUserMutation.isLoading}
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </button>
+                          ) : user.isApproved && !user.isActive ? (
+                            <button
+                              onClick={() => handleActivate(user._id)}
+                              className="p-2 text-success-600 hover:bg-success-50 rounded-lg transition-colors duration-200"
+                              title="Activate"
+                              disabled={activateUserMutation.isLoading}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                          ) : null}
                           <button
                             onClick={() => handleEdit(user)}
                             className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
@@ -224,9 +395,10 @@ const UserManagement = () => {
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => handleRemove(user._id)}
+                            onClick={() => handleDelete(user._id)}
                             className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
-                            title="Remove"
+                            title="Delete"
+                            disabled={deleteUserMutation.isLoading}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
