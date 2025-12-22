@@ -476,7 +476,7 @@ router.post('/:id/payments', adminOrStaff, [
 
     // Create transaction
     await Transaction.createTransaction({
-      type: invoice.type === 'sale' ? 'payment' : 'payment',
+      type: invoice.type === 'sale' ? 'payment_received' : 'payment_made',
       category: invoice.type === 'sale' ? 'income' : 'expense',
       amount: paymentAmount,
       description: `Payment for ${invoice.invoiceNumber}`,
@@ -485,7 +485,7 @@ router.post('/:id/payments', adminOrStaff, [
       customer: invoice.customer?._id,
       supplier: invoice.supplier?._id,
       paymentMethod: paymentMethod,
-      account: invoice.type === 'sale' ? 'cash' : 'payables',
+      account: invoice.type === 'sale' ? 'cash' : 'bank_account',
       balanceBefore: 0,
       balanceAfter: paymentAmount,
       createdBy: req.user._id
