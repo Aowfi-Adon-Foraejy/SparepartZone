@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
 import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonCard } from '../components/SkeletonLoader';
 import { getFinancialSummary, calculateCustomerDues, calculateSupplierPayables, getAccountBalances, getLowStockProducts } from '../utils/financialSummary';
 import {
   TrendingUp,
@@ -24,6 +25,14 @@ const StatCard = ({ title, value, icon: Icon, change, changeType, color = 'prima
     blue: 'stat-card-primary',
   };
 
+  const borderTopColors = {
+    primary: 'border-t-primary-500',
+    green: 'border-t-green-500',
+    yellow: 'border-t-yellow-500',
+    red: 'border-t-red-500',
+    blue: 'border-t-blue-500',
+  };
+
   const iconColors = {
     primary: 'text-primary-600',
     green: 'text-success-600',
@@ -33,7 +42,36 @@ const StatCard = ({ title, value, icon: Icon, change, changeType, color = 'prima
   };
 
   return (
-    <div className={`stat-card ${colorClasses[color]} group cursor-pointer card-hover`}>
+    <div 
+      className={`stat-card ${colorClasses[color]} group cursor-pointer card-hover border-t-4 ${borderTopColors[color]}`}
+      onClick={() => {
+        // Navigate to relevant pages based on card type
+        switch (title) {
+          case 'Total Products':
+            window.location.href = '/products';
+            break;
+          case 'Total Customers':
+            window.location.href = '/customers';
+            break;
+          case 'Total Suppliers':
+            window.location.href = '/suppliers';
+            break;
+          case 'Total Sales':
+          case 'Total Purchases':
+            window.location.href = '/transactions';
+            break;
+          case 'Customer Dues':
+            window.location.href = '/customers';
+            break;
+          case 'Supplier Payables':
+            window.location.href = '/suppliers';
+            break;
+          default:
+            // For other cards, you can add navigation as needed
+            break;
+        }
+      }}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
@@ -121,6 +159,58 @@ const Dashboard = () => {
 
   const isLoading = transactionsLoading || invoicesLoading || purchaseInvoicesLoading || 
                    productsLoading || customersLoading || suppliersLoading;
+
+  // Show skeleton cards while loading
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-10 bg-gray-300 rounded w-64 mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-48"></div>
+          </div>
+          <div className="h-8 bg-gray-300 rounded w-32"></div>
+        </div>
+
+        {/* Stats cards skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
+        </div>
+
+        {/* Recent activity skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="card">
+              <div className="flex items-center justify-between mb-6">
+                <div className="h-6 bg-gray-300 rounded w-32"></div>
+                <div className="h-6 bg-gray-300 rounded w-16"></div>
+              </div>
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, itemIndex) => (
+                  <div key={itemIndex} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-gray-300 rounded-lg"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-300 rounded w-24"></div>
+                        <div className="h-3 bg-gray-300 rounded w-20"></div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="h-4 bg-gray-300 rounded w-16 mb-2"></div>
+                      <div className="h-3 bg-gray-300 rounded w-20"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Calculate unified financial summary
   const financialSummary = getFinancialSummary(transactionsData?.transactions || []);
@@ -224,7 +314,11 @@ if (isLoading) {
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-gray-900">Recent Sales</h3>
-            <span className="badge badge-success">Live</span>
+            <span className="badge badge-success relative">
+              Live
+              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-green-400 rounded-full animate-ping"></div>
+              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-green-400 rounded-full"></div>
+            </span>
           </div>
           <div className="space-y-3">
             {invoicesData?.invoices?.slice(0, 5).length > 0 ? (
@@ -263,7 +357,11 @@ if (isLoading) {
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-gray-900">Recent Purchases</h3>
-            <span className="badge badge-primary">Live</span>
+            <span className="badge badge-primary relative">
+              Live
+              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-blue-400 rounded-full animate-ping"></div>
+              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-blue-400 rounded-full"></div>
+            </span>
           </div>
           <div className="space-y-3">
             {purchaseInvoicesData?.invoices?.slice(0, 5).length > 0 ? (
