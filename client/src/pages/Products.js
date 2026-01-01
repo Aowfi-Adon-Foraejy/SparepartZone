@@ -128,10 +128,20 @@ const Products = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div 
+        className="flex items-center justify-between"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(15px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '12px',
+          padding: '1rem 1.5rem',
+          marginBottom: '2rem'
+        }}
+      >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-600 mt-1">Manage your inventory and track stock levels</p>
+          <h1 className="text-3xl font-bold text-white">Products</h1>
+          <p className="text-white/80 mt-1">Manage your inventory and track stock levels</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -144,70 +154,70 @@ const Products = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="stat-card stat-card-primary card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Products</p>
-              <p className="text-3xl font-bold text-gray-900">{pagination?.total || 0}</p>
-              <div className="mt-3 flex items-center text-xs text-primary-600">
+              <p className="stat-card-label mb-2">Total Products</p>
+              <p className="stat-card-value">{pagination?.total || 0}</p>
+              <div className="mt-3 flex items-center text-xs text-blue-400">
                 <TrendingUp className="h-3 w-3 mr-1" />
                 <span>12% from last month</span>
               </div>
             </div>
-            <div className="p-4 bg-primary-50 rounded-2xl">
-              <Package className="h-8 w-8 text-primary-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-primary">
+              <Package className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-warning card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Low Stock Items</p>
-              <p className="text-3xl font-bold text-warning-600">{getLowStockProducts(products)}</p>
-              <div className="mt-3 flex items-center text-xs text-warning-600">
+              <p className="stat-card-label mb-2">Low Stock Items</p>
+              <p className="stat-card-value">{getLowStockProducts(products)}</p>
+              <div className="mt-3 flex items-center text-xs text-amber-400">
                 <AlertTriangle className="h-3 w-3 mr-1" />
                 <span>Requires attention</span>
               </div>
             </div>
-            <div className="p-4 bg-warning-50 rounded-2xl">
-              <AlertTriangle className="h-8 w-8 text-warning-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-warning">
+              <AlertTriangle className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-success card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Active Products</p>
-              <p className="text-3xl font-bold text-success-600">
+              <p className="stat-card-label mb-2">Active Products</p>
+              <p className="stat-card-value">
                 {products?.filter(p => p.isActive).length || 0}
               </p>
-              <div className="mt-3 flex items-center text-xs text-success-600">
+              <div className="mt-3 flex items-center text-xs text-emerald-400">
                 <TrendingUp className="h-3 w-3 mr-1" />
                 <span>Live inventory</span>
               </div>
             </div>
-            <div className="p-4 bg-success-50 rounded-2xl">
-              <Package className="h-8 w-8 text-success-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-success">
+              <Package className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-primary card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Categories</p>
-              <p className="text-3xl font-bold text-primary-600">
+              <p className="stat-card-label mb-2">Categories</p>
+              <p className="stat-card-value">
                 {[...new Set(products?.map(p => p.category))].length || 0}
               </p>
-              <div className="mt-3 flex items-center text-xs text-primary-600">
+              <div className="mt-3 flex items-center text-xs text-blue-400">
                 <Package className="h-3 w-3 mr-1" />
                 <span>Product types</span>
               </div>
             </div>
-            <div className="p-4 bg-primary-50 rounded-2xl">
-              <Package className="h-8 w-8 text-primary-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-primary">
+              <Package className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
@@ -216,108 +226,116 @@ const Products = () => {
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="flex items-center space-x-4 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-12 py-3 w-full sm:w-80 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-3 h-5 w-5 text-gray-400 hover:text-gray-600 bg-white rounded-full flex items-center justify-center transition-colors duration-200 hover:bg-gray-100"
-                title="Clear search"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
+           <div className="relative flex-1 sm:flex-initial">
+             <Search className="absolute left-4 top-3 h-5 w-5 text-white/40" />
+             <input
+               type="text"
+               placeholder="Search products..."
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+               className="pl-12 pr-12 py-3 w-full sm:w-80 bg-white/10 border-white/20 text-white placeholder-white/50 backdrop-blur-md rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all duration-200"
+               style={{ backdropFilter: 'blur(10px)' }}
+             />
+             {searchTerm && (
+               <button
+                 onClick={() => setSearchTerm('')}
+                 className="absolute right-4 top-3 h-5 w-5 text-white/40 hover:text-white/60 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white/20"
+                 title="Clear search"
+               >
+                 <X className="h-3 w-3" />
+               </button>
+             )}
+           </div>
         </div>
         
 
       </div>
 
-      {/* Products Table */}
-      <div className="table-container">
+       {/* Products Table */}
+      <div 
+        className="rounded-xl overflow-hidden border"
+        style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="table">
-            <thead className="table-header sticky top-0 z-10 bg-gray-50 shadow-sm">
+            <thead className="sticky top-0 z-10" style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
               <tr>
-                <th className="table-header-cell">Product</th>
-                <th className="table-header-cell">SKU</th>
-                <th className="table-header-cell">Brand</th>
-                <th className="table-header-cell">Category</th>
-                <th className="table-header-cell">Stock</th>
-                <th className="table-header-cell">Price</th>
-                <th className="table-header-cell">Status</th>
-                <th className="table-header-cell text-right">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Product</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">SKU</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Brand</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Category</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Stock</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Price</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="table-body">
+            <tbody>
               {filteredProducts.map((product, index) => (
-                <tr key={product._id} className={`table-row group ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors duration-150`}>
-                  <td className="table-cell">
+                <tr key={product._id} className="group hover:bg-white/5 transition-colors duration-150" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Package className="h-5 w-5 text-gray-600" />
+                      <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{background: 'rgba(59, 130, 246, 0.2)'}}>
+                        <Package className="h-5 w-5 text-blue-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        <p className="text-xs text-gray-500">{product.sku}</p>
+                        <p className="font-semibold text-white">{product.name}</p>
+                        <p className="text-xs text-white/60">{product.sku}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="table-cell">
-                    <span className="badge badge-gray">{product.sku}</span>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">{product.sku}</span>
                   </td>
-                  <td className="table-cell">{product.brand}</td>
-                  <td className="table-cell">
-                    <span className="badge badge-primary">{product.category}</span>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{product.brand}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">{product.category}</span>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
-                      <span className={`badge ${
+                      <span className={`px-2 py-1 text-xs rounded-full border ${
                         product.stock.current <= product.stock.reorderThreshold 
-                          ? 'badge-danger' 
-                          : 'badge-success'
+                          ? 'bg-red-500/20 text-red-400 border-red-500/30' 
+                          : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                       }`}>
                         {product.stock.current}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-white/60">
                         Min: {product.stock.reorderThreshold}
                       </span>
                     </div>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-left">
-                      <p className="font-semibold text-gray-900">৳{product.sellingPrice.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500">Cost: ৳{product.costPrice?.toLocaleString()}</p>
+                      <p className="font-semibold text-white">৳{product.sellingPrice.toLocaleString()}</p>
+                      <p className="text-xs text-white/60">Cost: ৳{product.costPrice?.toLocaleString()}</p>
                     </div>
                   </td>
-                  <td className="table-cell">
-                    <span className={`badge ${
-                      product.isActive ? 'badge-success' : 'badge-gray'
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full border ${
+                      product.isActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
                     }`}>
                       {product.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <button
                         onClick={() => {
                           setSelectedProduct(product);
                           setShowEditModal(true);
                         }}
-                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
+                        className="p-2 text-blue-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteProduct(product._id)}
-                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
+                        className="p-2 text-red-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

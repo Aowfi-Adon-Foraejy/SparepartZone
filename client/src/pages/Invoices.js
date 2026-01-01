@@ -384,10 +384,20 @@ const Invoices = () => {
          {/* Header */}
 
          {/* Add Payment Modal */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+       <div 
+         className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+         style={{
+           background: 'rgba(255, 255, 255, 0.05)',
+           backdropFilter: 'blur(15px)',
+           border: '1px solid rgba(255, 255, 255, 0.1)',
+           borderRadius: '12px',
+           padding: '1rem 1.5rem',
+           marginBottom: '2rem'
+         }}
+       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-          <p className="text-gray-600 mt-1">Manage sales and purchase invoices</p>
+          <h1 className="text-3xl font-bold text-white">Invoices</h1>
+          <p className="text-white/80 mt-1">Manage sales and purchase invoices</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
@@ -459,62 +469,74 @@ const Invoices = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="stat-card stat-card-primary card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Invoices</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="stat-card-label mb-2">Total Invoices</p>
+              <p className="stat-card-value">
                 {currentData?.pagination?.total || 0}
               </p>
-              <div className="mt-3 flex items-center text-xs text-primary-600">
+              <div className="mt-3 flex items-center text-xs text-blue-400">
                 <TrendingUp className="h-3 w-3 mr-1" />
                 <span>8% from last month</span>
               </div>
             </div>
-            <div className="p-4 bg-primary-50 rounded-2xl">
-              <FileText className="h-8 w-8 text-primary-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-primary">
+              <FileText className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-success card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Paid</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">
+              <p className="stat-card-label mb-2">Paid</p>
+              <p className="stat-card-value">
                 {currentData?.invoices?.filter(inv => getPaymentStatusForInvoice(inv) === 'fully_paid').length || 0}
               </p>
+              <div className="mt-3 flex items-center text-xs text-emerald-400">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>Fully paid</span>
+              </div>
             </div>
-            <div className="p-3 bg-green-50 rounded-full">
-              <TrendingUp className="h-6 w-6 text-green-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-success">
+              <TrendingUp className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-yellow">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Partially Paid</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">
+              <p className="stat-card-label mb-2">Partially Paid</p>
+              <p className="stat-card-value">
                 {currentData?.invoices?.filter(inv => getPaymentStatusForInvoice(inv) === 'partially_paid').length || 0}
               </p>
+              <div className="mt-3 flex items-center text-xs text-amber-400">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                <span>Partial payments</span>
+              </div>
             </div>
-            <div className="p-3 bg-yellow-50 rounded-full">
-              <AlertTriangle className="h-6 w-6 text-yellow-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-warning">
+              <AlertTriangle className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-red">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Unpaid</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">
+              <p className="stat-card-label mb-2">Unpaid</p>
+              <p className="stat-card-value">
                 {unpaidInvoices.length}
               </p>
+              <div className="mt-3 flex items-center text-xs text-red-400">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                <span>Requires attention</span>
+              </div>
             </div>
-            <div className="p-3 bg-red-50 rounded-full">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-danger">
+              <AlertTriangle className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
@@ -609,72 +631,63 @@ const Invoices = () => {
         </div>
       </div>
 
-      {/* Invoices Table */}
+       {/* Invoices Table */}
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div 
+          className="rounded-xl overflow-hidden border"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}
+        >
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+            <table className="table">
+              <thead className="sticky top-0 z-10" style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Invoice
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Invoice</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
                     {activeTab === 'sales' || activeTab === 'quick' ? 'Customer' : 'Supplier'}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Paid
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Due
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">Paid</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">Due</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {currentData?.invoices?.map((invoice, index) => (
-                  <tr key={invoice._id} className={`hover:bg-gray-50 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} transition-colors duration-150`}>
+                  <tr key={invoice._id} className="group hover:bg-white/5 transition-colors duration-150" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</div>
-                        <div className="text-sm text-gray-500">{invoice.type}</div>
+                        <div className="text-sm font-semibold text-white">{invoice.invoiceNumber}</div>
+                        <div className="text-xs text-white/60">{invoice.type}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {activeTab === 'sales' || activeTab === 'quick' ? invoice.customer?.name : invoice.supplier?.name}
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      {activeTab === 'sales' || activeTab === 'quick' ? invoice.customer?.name : invoice.supplier?.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{new Date(invoice.date).toLocaleDateString()}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      {new Date(invoice.date).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-white">
                       {formatCurrency(invoice.total || 0)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-white">
                       {formatCurrency(invoice.amountPaid || invoice.paid || 0)}
                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-white">
                        {formatCurrency(invoice.amountDue || Math.max(0, (invoice.total || 0) - (invoice.amountPaid || invoice.paid || 0)))}
                      </td>
                      <td className="px-6 py-4 whitespace-nowrap">
-                       <span className={`px-3 py-1 text-xs rounded-full ${
-                         getPaymentStatusForInvoice(invoice) === 'fully_paid' ? 'bg-green-100 text-green-800' :
-                         getPaymentStatusForInvoice(invoice) === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
-                         'bg-red-100 text-red-800'
+                       <span className={`px-2 py-1 text-xs font-medium rounded-full border ${
+                         getPaymentStatusForInvoice(invoice) === 'fully_paid' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                         getPaymentStatusForInvoice(invoice) === 'partially_paid' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                         'bg-red-500/20 text-red-400 border-red-500/30'
                        }`}>
                          {getPaymentStatusForInvoice(invoice) === 'fully_paid' ? 'Paid' :
                           getPaymentStatusForInvoice(invoice) === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
@@ -687,7 +700,7 @@ const Invoices = () => {
                             setSelectedInvoice(invoice);
                             setShowEditModal(true);
                           }}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-400 hover:text-blue-300"
                           title="Edit"
                         >
                           <Edit className="h-4 w-4" />
@@ -698,22 +711,22 @@ const Invoices = () => {
                               setSelectedInvoice(invoice);
                               setShowQuickPaymentModal(true);
                             }}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-emerald-400 hover:text-emerald-300"
                             title="Add Payment"
                           >
                             <DollarSign className="h-4 w-4" />
                           </button>
                         )}
-<button
+                        <button
                             onClick={() => handleDownloadPDF(invoice._id)}
-                            className="text-gray-600 hover:text-gray-900"
+                            className="text-white/60 hover:text-white/80"
                             title="Download PDF"
                           >
                             <Download className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handlePrintInvoice(invoice)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-400 hover:text-blue-300"
                             title="Print Invoice"
                           >
                             <Printer className="h-4 w-4" />
@@ -728,25 +741,26 @@ const Invoices = () => {
 
           {currentData?.invoices?.length === 0 && (
             <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No {activeTab} invoices found</p>
-              <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters</p>
+              <FileText className="h-12 w-12 text-white/40 mx-auto mb-4" />
+              <p className="text-white/60">No {activeTab} invoices found</p>
+              <p className="text-sm text-white/40 mt-1">Try adjusting your search or filters</p>
             </div>
           )}
         </div>
       )}
 
-      {/* Pagination */}
+       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-between items-center px-6 py-3 bg-gray-50 border-t border-gray-200">
-          <div className="text-sm text-gray-700">
+        <div className="flex justify-between items-center px-6 py-3" style={{ background: 'rgba(255, 255, 255, 0.05)', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          <div className="text-sm text-white/60">
             Showing {((currentPage - 1) * 15) + 1} to {Math.min(currentPage * 15, currentData.pagination.total)} of {currentData.pagination.total} results
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
-              className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-1 border border-white/20 rounded-md disabled:opacity-50 text-white bg-white/10 backdrop-blur-sm disabled:text-white/30"
               disabled={currentPage === 1}
+              style={{ backdropFilter: 'blur(10px)' }}
             >
               Previous
             </button>
@@ -756,18 +770,20 @@ const Invoices = () => {
                 onClick={() => handlePageChange(page)}
                 className={`px-3 py-1 border ${
                   page === currentPage
-                    ? 'border-gray-300 bg-gray-100'
-                    : 'border-gray-300 hover:bg-gray-50'
+                    ? 'border-white/20 bg-white/20 text-white'
+                    : 'border-white/20 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm'
                 } rounded-md disabled:opacity-50`}
                 disabled={page === currentPage}
+                style={{ backdropFilter: 'blur(10px)' }}
               >
                 {page}
               </button>
             ))}
             <button
               onClick={() => handlePageChange(currentPage + 1)}
-              className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-1 border border-white/20 rounded-md disabled:opacity-50 text-white bg-white/10 backdrop-blur-sm disabled:text-white/30"
               disabled={currentPage === totalPages}
+              style={{ backdropFilter: 'blur(10px)' }}
             >
               Next
             </button>

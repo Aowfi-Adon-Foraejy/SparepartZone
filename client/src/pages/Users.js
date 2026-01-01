@@ -163,10 +163,20 @@ const handleDeactivate = (userId) => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+      <div 
+        className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(15px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '12px',
+          padding: '1rem 1.5rem',
+          marginBottom: '2rem'
+        }}
+      >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage staff accounts and permissions</p>
+          <h1 className="text-3xl font-bold text-white">User Management</h1>
+          <p className="text-white/80 mt-1">Manage staff accounts and permissions</p>
         </div>
         {isAdmin && (
           <div className="flex space-x-3">
@@ -184,57 +194,57 @@ const handleDeactivate = (userId) => {
       {/* Stats Cards */}
       {usersData?.stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="stat-card stat-card-success">
+          <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Admins</p>
-                <p className="text-2xl font-bold text-gray-900">{usersData.stats.activeAdmins}</p>
+                <p className="stat-card-label mb-2">Active Admins</p>
+                <p className="stat-card-value">{usersData.stats.activeAdmins}</p>
               </div>
-              <div className="p-3 bg-red-50 rounded-full">
-                <Shield className="h-6 w-6 text-red-600" />
+              <div className="stat-card-icon-bg stat-card-icon-bg-danger">
+                <Shield className="h-6 w-6 text-white" />
               </div>
             </div>
           </div>
           
-          <div className="stat-card stat-card-primary">
+          <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Staff</p>
-                <p className="text-2xl font-bold text-gray-900">{usersData.stats.activeStaff}</p>
+                <p className="stat-card-label mb-2">Active Staff</p>
+                <p className="stat-card-value">{usersData.stats.activeStaff}</p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-full">
-                <UsersIcon className="h-6 w-6 text-blue-600" />
+              <div className="stat-card-icon-bg stat-card-icon-bg-primary">
+                <UsersIcon className="h-6 w-6 text-white" />
               </div>
             </div>
           </div>
           
-          <div className="stat-card stat-card-yellow">
+          <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending Approval</p>
-                <p className="text-2xl font-bold text-gray-900">{usersData.stats.pendingStaff}</p>
+                <p className="stat-card-label mb-2">Pending Approval</p>
+                <p className="stat-card-value">{usersData.stats.pendingStaff}</p>
               </div>
-              <div className="p-3 bg-yellow-50 rounded-full">
-                <XCircle className="h-6 w-6 text-yellow-600" />
+              <div className="stat-card-icon-bg stat-card-icon-bg-warning">
+                <XCircle className="h-6 w-6 text-white" />
               </div>
             </div>
           </div>
           
-          <div className="stat-card stat-card-red">
+          <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Inactive Users</p>
-                <p className="text-2xl font-bold text-gray-900">{usersData.stats.inactiveUsers}</p>
+                <p className="stat-card-label mb-2">Inactive Users</p>
+                <p className="stat-card-value">{usersData.stats.inactiveUsers}</p>
               </div>
-              <div className="p-3 bg-gray-50 rounded-full">
-                <XCircle className="h-6 w-6 text-gray-600" />
+              <div className="stat-card-icon-bg" style={{background: 'rgba(107, 114, 128, 0.2)', boxShadow: '0 0 15px rgba(107, 114, 128, 0.4), inset 0 0 10px rgba(107, 114, 128, 0.3)'}}>
+                <XCircle className="h-6 w-6 text-white" />
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Filters */}
+       {/* Filters */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4">
         <div className="flex-1 max-w-md">
           <input
@@ -242,7 +252,8 @@ const handleDeactivate = (userId) => {
             placeholder="Search users by name, email, or username..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input w-full"
+            className="bg-white/10 border-white/20 text-white placeholder-white/50 backdrop-blur-md rounded-xl px-4 py-2.5 border text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all duration-200"
+            style={{ backdropFilter: 'blur(10px)' }}
           />
         </div>
         <div className="flex space-x-2">
@@ -250,9 +261,10 @@ const handleDeactivate = (userId) => {
             onClick={() => setStatusFilter('all')}
             className={`px-4 py-2 rounded-lg border transition-colors ${
               statusFilter === 'all' 
-                ? 'bg-primary-100 border-primary-300 text-primary-700' 
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                ? 'bg-white/20 border-white/30 text-white' 
+                : 'border-white/20 text-white/60 hover:bg-white/10'
             }`}
+            style={{ backdropFilter: 'blur(10px)' }}
           >
             All
           </button>
@@ -260,9 +272,10 @@ const handleDeactivate = (userId) => {
             onClick={() => setStatusFilter('active')}
             className={`px-4 py-2 rounded-lg border transition-colors ${
               statusFilter === 'active' 
-                ? 'bg-primary-100 border-primary-300 text-primary-700' 
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' 
+                : 'border-white/20 text-white/60 hover:bg-white/10'
             }`}
+            style={{ backdropFilter: 'blur(10px)' }}
           >
             Active
           </button>
@@ -270,9 +283,10 @@ const handleDeactivate = (userId) => {
             onClick={() => setStatusFilter('pending')}
             className={`px-4 py-2 rounded-lg border transition-colors ${
               statusFilter === 'pending' 
-                ? 'bg-yellow-100 border-yellow-300 text-yellow-700' 
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' 
+                : 'border-white/20 text-white/60 hover:bg-white/10'
             }`}
+            style={{ backdropFilter: 'blur(10px)' }}
           >
             Pending
           </button>
@@ -280,9 +294,10 @@ const handleDeactivate = (userId) => {
             onClick={() => setStatusFilter('inactive')}
             className={`px-4 py-2 rounded-lg border transition-colors ${
               statusFilter === 'inactive' 
-                ? 'bg-red-100 border-red-300 text-red-700' 
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                ? 'bg-red-500/20 border-red-500/30 text-red-400' 
+                : 'border-white/20 text-white/60 hover:bg-white/10'
             }`}
+            style={{ backdropFilter: 'blur(10px)' }}
           >
             Inactive
           </button>
@@ -291,77 +306,92 @@ const handleDeactivate = (userId) => {
 
 
 
-      {/* Users Table */}
-      <div className="table-container">
+       {/* Users Table */}
+      <div 
+        className="rounded-xl overflow-hidden border"
+        style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="table">
-            <thead className="table-header">
+            <thead className="sticky top-0 z-10" style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
               <tr>
-                <th className="table-header-cell">User</th>
-                <th className="table-header-cell">Contact</th>
-                <th className="table-header-cell">Role</th>
-                <th className="table-header-cell">Status</th>
-                <th className="table-header-cell">Join Date</th>
-                <th className="table-header-cell">Salary</th>
-                <th className="table-header-cell text-right">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">User</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Role</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Join Date</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Salary</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="table-body">
+            <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user._id} className="table-row group">
-                  <td className="table-cell">
+                <tr key={user._id} className="group hover:bg-white/5 transition-colors duration-150" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <UsersIcon className="h-5 w-5 text-gray-600" />
+                      <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{background: 'rgba(59, 130, 246, 0.2)'}}>
+                        <UsersIcon className="h-5 w-5 text-blue-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-semibold text-white">
                           {user.profile ? `${user.profile.firstName} ${user.profile.lastName}` : user.username}
                         </p>
-                        <p className="text-xs text-gray-500">@{user.username}</p>
+                        <p className="text-xs text-white/60">@{user.username}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2 text-sm">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-900">{user.email}</span>
+                        <Mail className="h-4 w-4 text-white/40" />
+                        <span className="text-white">{user.email}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
-                        <Phone className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-900">{user.profile?.phone || user.phone}</span>
+                        <Phone className="h-4 w-4 text-white/40" />
+                        <span className="text-white">{user.profile?.phone || user.phone}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="table-cell">
-                    <span className={`px-3 py-1 text-xs rounded-full ${getRoleColor(user.role)}`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full border ${
+                      user.role === 'admin' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                      user.role === 'staff' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                      'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                    }`}>
                       {user.role}
                     </span>
                   </td>
-                  <td className="table-cell">
-                    <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(user)}`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full border ${
+                      !user.isApproved ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                      !user.isActive ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                      'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    }`}>
                       {!user.isApproved ? 'Pending' : !user.isActive ? 'Inactive' : 'Active'}
                     </span>
                   </td>
-                  <td className="table-cell">
-                    <div className="text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-white">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </div>
                   </td>
-                  <td className="table-cell">
-                    <div className="text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-white">
                       {formatCurrency(user.salary?.base || 0)}
                     </div>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       {isAdmin && (
                         <>
                           {!user.isApproved && (
                             <button
                               onClick={() => handleApprove(user._id)}
-                              className="p-2 text-success-600 hover:bg-success-50 rounded-lg transition-colors duration-200"
+                              className="p-2 text-emerald-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                               title="Approve"
                               disabled={approveUserMutation.isLoading}
                             >
@@ -371,7 +401,7 @@ const handleDeactivate = (userId) => {
                           {user.isApproved && user.isActive ? (
                             <button
                               onClick={() => handleDeactivate(user._id)}
-                              className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
+                              className="p-2 text-red-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                               title="Deactivate"
                               disabled={deactivateUserMutation.isLoading}
                             >
@@ -380,7 +410,7 @@ const handleDeactivate = (userId) => {
                           ) : user.isApproved && !user.isActive ? (
                             <button
                               onClick={() => handleActivate(user._id)}
-                              className="p-2 text-success-600 hover:bg-success-50 rounded-lg transition-colors duration-200"
+                              className="p-2 text-emerald-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                               title="Activate"
                               disabled={activateUserMutation.isLoading}
                             >
@@ -389,14 +419,14 @@ const handleDeactivate = (userId) => {
                           ) : null}
                           <button
                             onClick={() => handleEdit(user)}
-                            className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
+                            className="p-2 text-blue-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                             title="Edit"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(user._id)}
-                            className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
+                            className="p-2 text-red-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                             title="Delete"
                             disabled={deleteUserMutation.isLoading}
                           >
@@ -414,8 +444,8 @@ const handleDeactivate = (userId) => {
         
         {filteredUsers.length === 0 && (
           <div className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No users found</p>
+            <Users className="h-12 w-12 text-white/40 mx-auto mb-4" />
+            <p className="text-white/60">No users found</p>
           </div>
         )}
       </div>

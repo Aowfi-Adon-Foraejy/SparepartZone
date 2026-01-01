@@ -48,15 +48,27 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-gray-900 to-gray-800 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 border-r border-gray-700/50
+          fixed inset-y-0 left-0 z-40 w-64 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-2xl
           ${isOpen ? 'translate-x-0 shadow-strong' : '-translate-x-full'}
         `}
+        style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          backdropFilter: 'blur(30px)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-6 bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700/50">
+        <div 
+          className="flex items-center justify-between h-16 px-6 border-b"
+        style={{
+          background: 'rgba(0, 0, 0, 0.2)',
+          backdropFilter: 'blur(30px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+        }}
+        >
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <Package className="w-8 h-8 text-primary-400" />
+              <Package className="w-8 h-8 text-emerald-400" />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-success-500 rounded-full border-2 border-gray-800"></div>
             </div>
             <div>
@@ -77,10 +89,17 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* User Profile Section */}
         <nav className="mt-6">
           <div className="px-6 mb-6">
-            <div className="bg-gradient-to-r from-primary-600/20 to-secondary-600/20 rounded-2xl p-4 border border-gray-700/50">
+            <div 
+              className="rounded-2xl p-4"
+              style={{
+                background: 'rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(30px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}
+            >
               <div className="flex items-center space-x-3">
                 <div className="relative">
-                  <div className="h-12 w-12 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-xl flex items-center justify-center text-white font-bold shadow-glow">
+                  <div className="h-12 w-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-emerald-500/20">
                     {user?.profile?.firstName?.[0] || user?.username?.[0]?.toUpperCase()}
                   </div>
                   <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-success-500 rounded-full border-2 border-gray-800 flex items-center justify-center">
@@ -92,7 +111,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     {user?.profile?.firstName || user?.username}
                   </p>
                   <div className="flex items-center space-x-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100/10 text-primary-300 border border-primary-400/30">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                       {user?.role}
                     </span>
                   </div>

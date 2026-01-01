@@ -162,10 +162,20 @@ const Customers = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div 
+        className="flex items-center justify-between"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(15px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '12px',
+          padding: '1rem 1.5rem',
+          marginBottom: '2rem'
+        }}
+      >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-          <p className="text-gray-600 mt-1">Manage your customers and their billing information</p>
+          <h1 className="text-3xl font-bold text-white">Customers</h1>
+          <p className="text-white/80 mt-1">Manage your customers and their billing information</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -178,82 +188,82 @@ const Customers = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="stat-card stat-card-primary card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Customers</p>
-              <p className="text-3xl font-bold text-gray-900">{pagination?.total || 0}</p>
-              <div className="mt-3 flex items-center text-xs text-primary-600">
+              <p className="stat-card-label mb-2">Total Customers</p>
+              <p className="stat-card-value">{pagination?.total || 0}</p>
+              <div className="mt-3 flex items-center text-xs text-blue-400">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                <span>8% from last month</span>
+                <span>12% from last month</span>
               </div>
             </div>
-            <div className="p-4 bg-primary-50 rounded-2xl">
-              <Users className="h-8 w-8 text-primary-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-primary">
+              <Users className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-danger card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Customer Dues</p>
-              <p className="text-3xl font-bold text-danger-600">
+              <p className="stat-card-label mb-2">Total Customer Dues</p>
+              <p className="stat-card-value">
                 {formatCurrency((customers || []).reduce((sum, customer) => 
                   sum + calculateCustomerDues(allInvoicesData?.invoices || [], customer.name), 0))}
               </p>
-              <div className="mt-3 flex items-center text-xs text-danger-600">
+              <div className="mt-3 flex items-center text-xs text-red-400">
                 <TrendingDown className="h-3 w-3 mr-1" />
                 <span>Requires attention</span>
               </div>
             </div>
-            <div className="p-4 bg-danger-50 rounded-2xl">
-              <AlertTriangle className="h-8 w-8 text-danger-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-danger">
+              <TrendingDown className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-success card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Active Customers</p>
-              <p className="text-3xl font-bold text-success-600">
+              <p className="stat-card-label mb-2">Active Customers</p>
+              <p className="stat-card-value">
                 {customers?.filter(c => c.isActive && !c.isBlacklisted).length || 0}
               </p>
-              <div className="mt-3 flex items-center text-xs text-success-600">
+              <div className="mt-3 flex items-center text-xs text-emerald-400">
                 <TrendingUp className="h-3 w-3 mr-1" />
                 <span>Good standing</span>
               </div>
             </div>
-            <div className="p-4 bg-success-50 rounded-2xl">
-              <Users className="h-8 w-8 text-success-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-success">
+              <Users className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-warning card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Business Customers</p>
-              <p className="text-3xl font-bold text-warning-600">
+              <p className="stat-card-label mb-2">Business Customers</p>
+              <p className="stat-card-value">
                 {customers?.filter(c => c.type === 'business').length || 0}
               </p>
-              <div className="mt-3 flex items-center text-xs text-warning-600">
+              <div className="mt-3 flex items-center text-xs text-amber-400">
                 <Building className="h-3 w-3 mr-1" />
                 <span>Corporate accounts</span>
               </div>
             </div>
-            <div className="p-4 bg-warning-50 rounded-2xl">
-              <Building className="h-8 w-8 text-warning-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-warning">
+              <Building className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Pagination */}
+       {/* Pagination */}
       {customersData?.pagination?.pages > 1 && (
         <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-white/60">
             Showing {((customersData.pagination.page - 1) * customersData.pagination.limit) + 1} to{' '}
             {Math.min(customersData.pagination.page * customersData.pagination.limit, customersData.pagination.total)} of{' '}
             {customersData.pagination.total} results
@@ -262,14 +272,16 @@ const Customers = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50"
+              className="px-3 py-1 border border-white/20 rounded-md disabled:opacity-50 text-white bg-white/10 backdrop-blur-sm disabled:text-white/30"
+              style={{ backdropFilter: 'blur(10px)' }}
             >
               Previous
             </button>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, customersData.pagination.pages))}
               disabled={currentPage === customersData.pagination.pages}
-              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50"
+              className="px-3 py-1 border border-white/20 rounded-md disabled:opacity-50 text-white bg-white/10 backdrop-blur-sm disabled:text-white/30"
+              style={{ backdropFilter: 'blur(10px)' }}
             >
               Next
             </button>
@@ -277,83 +289,90 @@ const Customers = () => {
         </div>
       )}
 
-      {/* Customers Table */}
-      <div className="table-container">
+       {/* Customers Table */}
+      <div 
+        className="rounded-xl overflow-hidden border"
+        style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="table">
-            <thead className="table-header sticky top-0 z-10 bg-gray-50 shadow-sm">
+            <thead className="sticky top-0 z-10" style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
               <tr>
-                <th className="table-header-cell">Customer</th>
-                <th className="table-header-cell">Contact</th>
-                <th className="table-header-cell">Type</th>
-                <th className="table-header-cell">Outstanding Due</th>
-                <th className="table-header-cell">Status</th>
-                <th className="table-header-cell text-right">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Outstanding Due</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="table-body">
+            <tbody>
               {customers?.map((customer, index) => (
-                <tr key={customer._id} className={`table-row group ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors duration-150`}>
-                  <td className="table-cell">
+                <tr key={customer._id} className="group hover:bg-white/5 transition-colors duration-150" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Users className="h-5 w-5 text-gray-600" />
+                      <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{background: 'rgba(59, 130, 246, 0.2)'}}>
+                        <Users className="h-5 w-5 text-blue-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{customer.name}</p>
-                        <p className="text-xs text-gray-500">{customer.type}</p>
+                        <p className="font-semibold text-white">{customer.name}</p>
+                        <p className="text-xs text-white/60">{customer.type}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2 text-sm">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-900">{customer.email}</span>
+                        <Mail className="h-4 w-4 text-white/40" />
+                        <span className="text-white">{customer.email}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
-                        <Phone className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-900">{customer.phone}</span>
+                        <Phone className="h-4 w-4 text-white/40" />
+                        <span className="text-white">{customer.phone}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="table-cell">
-                    <span className={`badge ${
-                      customer.type === 'business' ? 'badge-primary' : 
-                      customer.type === 'individual' ? 'badge-success' : 'badge-gray'
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full border ${
+                      customer.type === 'business' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 
+                      customer.type === 'individual' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
                     }`}>
                       {customer.type}
                     </span>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-left">
                       <p className={`font-semibold ${
-                        calculateCustomerDues(allInvoicesData?.invoices || [], customer.name) > 0 ? 'text-danger-600' : 'text-success-600'
+                        calculateCustomerDues(allInvoicesData?.invoices || [], customer.name) > 0 ? 'text-amber-400' : 'text-emerald-400'
                       }`}>
                         {formatCurrency(calculateCustomerDues(allInvoicesData?.invoices || [], customer.name))}
                       </p>
                       {customer.creditLimit > 0 && (
-                        <p className="text-xs text-gray-500">Limit: {formatCurrency(customer.creditLimit)}</p>
+                        <p className="text-xs text-white/60">Limit: {formatCurrency(customer.creditLimit)}</p>
                       )}
                     </div>
                   </td>
-                  <td className="table-cell">
-                    <span className={`badge ${
-                      customer.isBlacklisted ? 'badge-danger' : 
-                      customer.isActive ? 'badge-success' : 'badge-gray'
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full border ${
+                      customer.isBlacklisted ? 'bg-red-500/20 text-red-400 border-red-500/30' : 
+                      customer.isActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
                     }`}>
                       {customer.isBlacklisted ? 'Blacklisted' : 
                        customer.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                   <td className="table-cell">
+                   <td className="px-6 py-4 whitespace-nowrap">
                      <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                        <button
                          onClick={() => {
                            setSelectedCustomer(customer);
                            setShowDetailsModal(true);
                          }}
-                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                         className="p-2 text-blue-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                          title="View Details"
                        >
                          <Eye className="h-4 w-4" />
@@ -363,13 +382,13 @@ const Customers = () => {
                            setSelectedCustomer(customer);
                            setShowEditModal(true);
                          }}
-                         className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
+                         className="p-2 text-blue-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                        >
                          <Edit className="h-4 w-4" />
                        </button>
                        <button
                          onClick={() => handleDeleteCustomer(customer._id)}
-                         className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
+                         className="p-2 text-red-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                        >
                          <Trash2 className="h-4 w-4" />
                        </button>
@@ -511,60 +530,60 @@ const Customers = () => {
                   <p className="text-sm text-gray-500 mt-1">All invoices and payments for this customer</p>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+                  <table className="min-w-full" style={{ background: 'rgba(255, 255, 255, 0.03)' }}>
+                    <thead className="sticky top-0 z-10" style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
                           Invoice ID
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
                           Date
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">
                           Total Amount
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">
                           Paid Amount
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">
                           Due Amount
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
                           Status
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
 {customerInvoicesData?.invoices?.map((invoice, index) => (
-                         <tr key={invoice._id} className={`hover:bg-gray-50 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} transition-colors duration-150`}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</div>
-                            <div className="text-sm text-gray-500">{invoice.type}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{new Date(invoice.date).toLocaleDateString()}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.total || 0)}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="text-sm font-medium text-gray-900">{formatCurrency(invoice.amountPaid || 0)}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="text-sm font-medium text-gray-900">
-                              {formatCurrency(invoice.amountDue || 0)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-3 py-1 text-xs rounded-full ${
-                              invoice.paymentStatus === 'fully_paid' ? 'bg-green-100 text-green-800' :
-                              invoice.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {invoice.paymentStatus === 'fully_paid' ? 'Paid' :
-                               invoice.paymentStatus === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
-                            </span>
-                          </td>
+                         <tr key={invoice._id} className={`group hover:bg-white/5 ${index % 2 === 0 ? 'bg-white/5' : 'bg-transparent'} transition-colors duration-150`} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <div className="text-sm font-semibold text-white">{invoice.invoiceNumber}</div>
+                             <div className="text-sm text-white/60">{invoice.type}</div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <div className="text-sm text-white">{new Date(invoice.date).toLocaleDateString()}</div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap text-right">
+                             <div className="text-sm font-medium text-white">{formatCurrency(invoice.total || 0)}</div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap text-right">
+                             <div className="text-sm font-medium text-white">{formatCurrency(invoice.amountPaid || 0)}</div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap text-right">
+                             <div className="text-sm font-medium text-white">
+                               {formatCurrency(invoice.amountDue || 0)}
+                             </div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <span className={`px-2 py-1 text-xs font-medium rounded-full border ${
+                               invoice.paymentStatus === 'fully_paid' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                               invoice.paymentStatus === 'partially_paid' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                               'bg-red-500/20 text-red-400 border-red-500/30'
+                             }`}>
+                               {invoice.paymentStatus === 'fully_paid' ? 'Paid' :
+                                invoice.paymentStatus === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
+                             </span>
+                           </td>
                         </tr>
                       ))}
                     </tbody>

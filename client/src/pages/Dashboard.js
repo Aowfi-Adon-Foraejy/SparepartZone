@@ -17,33 +17,25 @@ import {
 } from 'lucide-react';
 
 const StatCard = ({ title, value, icon: Icon, change, changeType, color = 'primary' }) => {
-  const colorClasses = {
-    primary: 'stat-card-primary',
-    green: 'stat-card-success',
-    yellow: 'stat-card-warning',
-    red: 'stat-card-danger',
-    blue: 'stat-card-primary',
-  };
-
-  const borderTopColors = {
-    primary: 'border-t-primary-500',
-    green: 'border-t-green-500',
-    yellow: 'border-t-yellow-500',
-    red: 'border-t-red-500',
-    blue: 'border-t-blue-500',
+  const iconBgColors = {
+    primary: 'stat-card-icon-bg-primary',
+    green: 'stat-card-icon-bg-success',
+    yellow: 'stat-card-icon-bg-warning',
+    red: 'stat-card-icon-bg-danger',
+    blue: 'stat-card-icon-bg-primary',
   };
 
   const iconColors = {
-    primary: 'text-primary-600',
-    green: 'text-success-600',
-    yellow: 'text-warning-600',
-    red: 'text-danger-600',
-    blue: 'text-blue-600',
+    primary: 'text-white',
+    green: 'text-white',
+    yellow: 'text-white',
+    red: 'text-white',
+    blue: 'text-white',
   };
 
   return (
     <div 
-      className={`stat-card ${colorClasses[color]} group cursor-pointer card-hover border-t-4 ${borderTopColors[color]}`}
+      className="stat-card group cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-2"
       onClick={() => {
         // Navigate to relevant pages based on card type
         switch (title) {
@@ -74,15 +66,15 @@ const StatCard = ({ title, value, icon: Icon, change, changeType, color = 'prima
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mb-3">
+          <p className="stat-card-label mb-2">{title}</p>
+          <p className="stat-card-value mb-3">
             {typeof value === 'number' ? value.toLocaleString() : value}
           </p>
           {change !== undefined && (
-            <div className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
+            <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
               changeType === 'increase' 
-                ? 'bg-success-50 text-success-700' 
-                : 'bg-danger-50 text-danger-700'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                : 'bg-red-500/20 text-red-300 border-red-500/30'
             }`}>
               {changeType === 'increase' ? (
                 <ArrowUpRight className="h-3 w-3 mr-1" />
@@ -93,8 +85,8 @@ const StatCard = ({ title, value, icon: Icon, change, changeType, color = 'prima
             </div>
           )}
         </div>
-        <div className={`p-4 bg-gray-50 rounded-2xl group-hover:bg-gray-100 transition-all duration-200 ${iconColors[color]}`}>
-          <Icon className="h-7 w-7" />
+        <div className={`stat-card-icon-bg ${iconBgColors[color]} group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
+          <Icon className={`h-6 w-6 ${iconColors[color]}`} />
         </div>
       </div>
     </div>
@@ -241,15 +233,24 @@ if (isLoading) {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div 
+        className="flex items-center justify-between mb-8"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          padding: '1.5rem 2rem',
+          borderRadius: '16px'
+        }}
+      >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's what's happening in your business today.</p>
+          <h1 className="text-4xl font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>Dashboard</h1>
+          <p className="text-white text-lg opacity-80">Welcome back! Here's what's happening in your business today.</p>
         </div>
         <div className="flex items-center space-x-3">
           <div className="text-right">
-            <p className="text-sm text-gray-500">Last updated</p>
-            <p className="text-xs font-medium text-gray-700">{new Date().toLocaleTimeString()}</p>
+            <p className="text-sm text-white opacity-60">Last updated</p>
+            <p className="text-sm font-medium text-white opacity-90">{new Date().toLocaleTimeString()}</p>
           </div>
         </div>
       </div>
@@ -313,35 +314,40 @@ if (isLoading) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Recent Sales</h3>
-            <span className="badge badge-success relative">
+            <h3 className="text-lg font-bold text-white">Recent Sales</h3>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 relative">
               Live
-              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-green-400 rounded-full animate-ping"></div>
-              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-green-400 rounded-full"></div>
+              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-2 w-2 bg-emerald-400 rounded-full animate-pulse"></div>
             </span>
           </div>
           <div className="space-y-3">
             {invoicesData?.invoices?.slice(0, 5).length > 0 ? (
               invoicesData.invoices.slice(0, 5).map((sale, index) => (
-                <div 
-                  key={sale._id} 
-                  className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group animate-slide-up"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 bg-success-100 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-success-600" />
-                    </div>
-                    <div>
-<p className="text-sm font-semibold text-gray-900">{sale.invoiceNumber}</p>
-                        <p className="text-xs text-gray-500">{sale.customer?.name || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-success-600">৳{sale.total.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">{new Date(sale.date).toLocaleDateString()}</p>
-                  </div>
-                </div>
+                 <div 
+                   key={sale._id} 
+                   className="flex items-center justify-between p-4 hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer group animate-slide-up"
+                   style={{ 
+                     animationDelay: `${index * 100}ms`,
+                     background: 'rgba(255, 255, 255, 0.08)',
+                     backdropFilter: 'blur(10px)',
+                     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                     boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.1)'
+                   }}
+                 >
+                   <div className="flex items-center space-x-3">
+                     <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{background: 'rgba(16, 185, 129, 0.2)', boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)'}}>
+                       <TrendingUp className="h-5 w-5 text-emerald-400" />
+                     </div>
+                     <div>
+ <p className="text-sm font-semibold text-white">{sale.invoiceNumber}</p>
+                         <p className="text-xs text-white/60">{sale.customer?.name || 'N/A'}</p>
+                     </div>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-sm font-bold text-emerald-400">৳{sale.total.toLocaleString()}</p>
+                     <p className="text-xs text-white/60">{new Date(sale.date).toLocaleDateString()}</p>
+                   </div>
+                 </div>
               ))
             ) : (
               <div className="text-center py-8">
@@ -356,35 +362,40 @@ if (isLoading) {
 
         <div className="card">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Recent Purchases</h3>
-            <span className="badge badge-primary relative">
+            <h3 className="text-lg font-bold text-white">Recent Purchases</h3>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 relative">
               Live
-              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-blue-400 rounded-full animate-ping"></div>
-              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-blue-400 rounded-full"></div>
+              <div className="absolute top-0 right-0 -mt-1 -mr-1 h-2 w-2 bg-blue-400 rounded-full animate-pulse"></div>
             </span>
           </div>
           <div className="space-y-3">
             {purchaseInvoicesData?.invoices?.slice(0, 5).length > 0 ? (
               purchaseInvoicesData.invoices.slice(0, 5).map((purchase, index) => (
-                <div 
-                  key={purchase._id} 
-                  className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group animate-slide-up"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                      <Package className="h-5 w-5 text-primary-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{purchase.invoiceNumber}</p>
-                      <p className="text-xs text-gray-500">{purchase.supplier?.name || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-primary-600">৳{purchase.total.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">{new Date(purchase.date).toLocaleDateString()}</p>
-                  </div>
-                </div>
+                 <div 
+                   key={purchase._id} 
+                   className="flex items-center justify-between p-4 hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer group animate-slide-up"
+                   style={{ 
+                     animationDelay: `${index * 100}ms`,
+                     background: 'rgba(255, 255, 255, 0.08)',
+                     backdropFilter: 'blur(10px)',
+                     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                     boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.1)'
+                   }}
+                 >
+                   <div className="flex items-center space-x-3">
+                     <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{background: 'rgba(59, 130, 246, 0.2)', boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)'}}>
+                       <Package className="h-5 w-5 text-blue-400" />
+                     </div>
+                     <div>
+                       <p className="text-sm font-semibold text-white">{purchase.invoiceNumber}</p>
+                       <p className="text-xs text-white/60">{purchase.supplier?.name || 'N/A'}</p>
+                     </div>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-sm font-bold text-blue-400">৳{purchase.total.toLocaleString()}</p>
+                     <p className="text-xs text-white/60">{new Date(purchase.date).toLocaleDateString()}</p>
+                   </div>
+                 </div>
               ))
             ) : (
               <div className="text-center py-8">
@@ -401,69 +412,138 @@ if (isLoading) {
       {/* Financial Summary */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-gray-900">Financial Summary (Last 30 Days)</h3>
+          <h3 className="text-lg font-bold text-white">Financial Summary (Last 30 Days)</h3>
           <div className="flex items-center space-x-2">
             <div className="h-2 w-2 bg-success-500 rounded-full animate-pulse"></div>
             <span className="text-xs text-gray-500">Live Data</span>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-gradient-to-br from-success-50 to-success-100/50 rounded-2xl border border-success-200/50">
-            <div className="h-12 w-12 bg-success-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <TrendingUp className="h-6 w-6 text-success-600" />
+          <div 
+            className="text-center p-6 rounded-2xl transition-all duration-300 hover:transform hover:-translate-y-1"
+            style={{
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+            }}
+          >
+            <div 
+              className="h-12 w-12 rounded-xl flex items-center justify-center mx-auto mb-4"
+              style={{
+                background: 'rgba(16, 185, 129, 0.2)',
+                boxShadow: '0 0 15px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(16, 185, 129, 0.3)'
+              }}
+            >
+              <TrendingUp className="h-6 w-6 text-emerald-400" />
             </div>
-            <p className="text-sm font-medium text-success-700 mb-2">Total Sales</p>
-            <p className="text-3xl font-bold text-success-600 mb-2">
+            <p className="text-sm font-medium text-white/80 mb-2">Total Sales</p>
+            <p className="text-3xl font-bold text-white mb-2" style={{ letterSpacing: '-0.05em', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
               ৳{financialSummary.totalSales.toLocaleString()}
             </p>
-            <p className="text-xs text-success-600">
+            <p className="text-xs text-white/60">
               {financialSummary.salesCount} transactions
             </p>
           </div>
-          <div className="text-center p-6 bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-2xl border border-primary-200/50">
-            <div className="h-12 w-12 bg-primary-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Package className="h-6 w-6 text-primary-600" />
+          <div 
+            className="text-center p-6 rounded-2xl transition-all duration-300 hover:transform hover:-translate-y-1"
+            style={{
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+            }}
+          >
+            <div 
+              className="h-12 w-12 rounded-xl flex items-center justify-center mx-auto mb-4"
+              style={{
+                background: 'rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 0 15px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.3)'
+              }}
+            >
+              <Package className="h-6 w-6 text-blue-400" />
             </div>
-            <p className="text-sm font-medium text-primary-700 mb-2">Total Purchases</p>
-            <p className="text-3xl font-bold text-primary-600 mb-2">
+            <p className="text-sm font-medium text-white/80 mb-2">Total Purchases</p>
+            <p className="text-3xl font-bold text-white mb-2" style={{ letterSpacing: '-0.05em', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
               ৳{financialSummary.totalPurchases.toLocaleString()}
             </p>
-            <p className="text-xs text-primary-600">
+            <p className="text-xs text-white/60">
               {financialSummary.purchaseCount} transactions
             </p>
           </div>
-          <div className="text-center p-6 bg-gradient-to-br from-secondary-50 to-secondary-100/50 rounded-2xl border border-secondary-200/50">
-            <div className="h-12 w-12 bg-secondary-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <DollarSign className="h-6 w-6 text-secondary-600" />
-            </div>
-            <p className="text-sm font-medium text-secondary-700 mb-2">Net Profit</p>
-            <p className="text-3xl font-bold text-secondary-600 mb-2">
-              ৳{(financialSummary.totalSales - financialSummary.totalPurchases).toLocaleString()}
-            </p>
-            <p className="text-xs text-secondary-600">
-              Sales - Purchases
-            </p>
-          </div>
+          {(() => {
+            const netProfit = financialSummary.totalSales - financialSummary.totalPurchases;
+            const isNegative = netProfit < 0;
+            return (
+              <div 
+                className="text-center p-6 rounded-2xl transition-all duration-300 hover:transform hover:-translate-y-1"
+                style={{
+                  background: isNegative 
+                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%)'
+                    : 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                }}
+              >
+                <div 
+                  className="h-12 w-12 rounded-xl flex items-center justify-center mx-auto mb-4"
+                  style={{
+                    background: isNegative 
+                      ? 'rgba(239, 68, 68, 0.2)'
+                      : 'rgba(16, 185, 129, 0.2)',
+                    boxShadow: isNegative 
+                      ? '0 0 15px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(239, 68, 68, 0.3)'
+                      : '0 0 15px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(16, 185, 129, 0.3)'
+                  }}
+                >
+                  <DollarSign className={`h-6 w-6 ${isNegative ? 'text-red-400' : 'text-emerald-400'}`} />
+                </div>
+                <p className={`text-sm font-medium text-white/80 mb-2`}>
+                  {isNegative ? 'Net Loss' : 'Net Profit'}
+                </p>
+                <p className="text-3xl font-bold mb-2" style={{ letterSpacing: '-0.05em', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
+                  <span className={isNegative ? 'text-red-400' : 'text-emerald-400'}>
+                    ৳{Math.abs(netProfit).toLocaleString()}
+                  </span>
+                  {isNegative && (
+                    <span className="text-xs text-red-400/60 ml-2" style={{ fontSize: '0.5em' }}>
+                      (Loss)
+                    </span>
+                  )}
+                </p>
+                <p className={`text-xs text-white/60`}>
+                  Sales - Purchases
+                </p>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
       {/* Account Balances */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-gray-900">Account Balances</h3>
+          <h3 className="text-lg font-bold text-white">Account Balances</h3>
           <button className="btn btn-ghost btn-sm">View All</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {accountBalances.slice(0, 4).map((account, index) => (
             <div 
               key={account.account} 
-              className="p-4 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl border border-gray-200/50 hover:shadow-medium transition-all duration-200 cursor-pointer animate-slide-up"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="p-4 rounded-xl transition-all duration-300 cursor-pointer animate-slide-up hover:transform hover:-translate-y-1"
+              style={{ 
+                animationDelay: `${index * 100}ms`,
+                background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+              }}
             >
-              <p className="text-sm font-medium text-gray-600 capitalize mb-2">
+              <p className="text-sm font-medium text-white/80 capitalize mb-2">
                 {account.account.replace('_', ' ')}
               </p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-white" style={{ letterSpacing: '-0.05em', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
                 ৳{account.balance.toLocaleString()}
               </p>
             </div>

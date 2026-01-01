@@ -171,10 +171,20 @@ const Suppliers = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div 
+        className="flex items-center justify-between"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(15px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '12px',
+          padding: '1rem 1.5rem',
+          marginBottom: '2rem'
+        }}
+      >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Suppliers</h1>
-          <p className="text-gray-600 mt-1">Manage your suppliers and purchases</p>
+          <h1 className="text-3xl font-bold text-white">Suppliers</h1>
+          <p className="text-white/80 mt-1">Manage your suppliers and purchases</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -187,75 +197,75 @@ const Suppliers = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="stat-card stat-card-primary card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Suppliers</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="stat-card-label mb-2">Total Suppliers</p>
+              <p className="stat-card-value">
                 {suppliersData?.pagination?.total || 0}
               </p>
-              <div className="mt-3 flex items-center text-xs text-primary-600">
+              <div className="mt-3 flex items-center text-xs text-blue-400">
                 <TrendingUp className="h-3 w-3 mr-1" />
                 <span>12% from last month</span>
               </div>
             </div>
-            <div className="p-4 bg-primary-50 rounded-2xl">
-              <Truck className="h-8 w-8 text-primary-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-primary">
+              <Truck className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-danger card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Overdue Payments</p>
-              <p className="text-3xl font-bold text-danger-600">
+              <p className="stat-card-label mb-2">Overdue Payments</p>
+              <p className="stat-card-value">
                 {suppliersData?.stats?.overdueCount || 0}
               </p>
-              <div className="mt-3 flex items-center text-xs text-danger-600">
+              <div className="mt-3 flex items-center text-xs text-red-400">
                 <TrendingDown className="h-3 w-3 mr-1" />
                 <span>Requires attention</span>
               </div>
             </div>
-            <div className="p-4 bg-danger-50 rounded-2xl">
-              <AlertTriangle className="h-8 w-8 text-danger-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-danger">
+              <AlertTriangle className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-warning card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Payables</p>
-              <p className="text-3xl font-bold text-warning-600">
+              <p className="stat-card-label mb-2">Total Payables</p>
+              <p className="stat-card-value">
                 {formatCurrency((suppliersData?.suppliers || []).reduce((sum, supplier) => 
                   sum + calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name), 0))}
               </p>
-              <div className="mt-3 flex items-center text-xs text-warning-600">
+              <div className="mt-3 flex items-center text-xs text-amber-400">
                 <DollarSign className="h-3 w-3 mr-1" />
                 <span>All suppliers</span>
               </div>
             </div>
-            <div className="p-4 bg-warning-50 rounded-2xl">
-              <DollarSign className="h-8 w-8 text-warning-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-warning">
+              <DollarSign className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="stat-card stat-card-success card-hover">
+        <div className="stat-card hover:transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Active Suppliers</p>
-              <p className="text-3xl font-bold text-success-600">
+              <p className="stat-card-label mb-2">Active Suppliers</p>
+              <p className="stat-card-value">
                 {suppliersData?.suppliers?.filter(s => s.isActive).length || 0}
               </p>
-              <div className="mt-3 flex items-center text-xs text-success-600">
+              <div className="mt-3 flex items-center text-xs text-emerald-400">
                 <TrendingUp className="h-3 w-3 mr-1" />
                 <span>Good relationships</span>
               </div>
             </div>
-            <div className="p-4 bg-success-50 rounded-2xl">
-              <Truck className="h-8 w-8 text-success-600" />
+            <div className="stat-card-icon-bg stat-card-icon-bg-success">
+              <Truck className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
@@ -263,82 +273,89 @@ const Suppliers = () => {
 
 
 
-      {/* Suppliers Table */}
-      <div className="table-container">
+       {/* Suppliers Table */}
+      <div 
+        className="rounded-xl overflow-hidden border"
+        style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="table">
-            <thead className="table-header sticky top-0 z-10 bg-gray-50 shadow-sm">
+            <thead className="sticky top-0 z-10" style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
               <tr>
-                <th className="table-header-cell">Supplier</th>
-                <th className="table-header-cell">Contact</th>
-                <th className="table-header-cell">Total Purchased</th>
-                <th className="table-header-cell">Outstanding</th>
-                <th className="table-header-cell">Status</th>
-                <th className="table-header-cell text-right">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Supplier</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Total Purchased</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Outstanding</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="table-body">
+            <tbody>
 {suppliersData?.suppliers?.map((supplier, index) => (
-                 <tr key={supplier._id} className={`table-row group ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors duration-150`}>
-                  <td className="table-cell">
+                 <tr key={supplier._id} className="group hover:bg-white/5 transition-colors duration-150" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Truck className="h-5 w-5 text-gray-600" />
+                      <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{background: 'rgba(59, 130, 246, 0.2)'}}>
+                        <Truck className="h-5 w-5 text-blue-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{supplier.name}</p>
-                        <p className="text-xs text-gray-500">{supplier.businessInfo?.companyName}</p>
+                        <p className="font-semibold text-white">{supplier.name}</p>
+                        <p className="text-xs text-white/60">{supplier.businessInfo?.companyName}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2 text-sm">
-                        <Phone className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-900">{supplier.phone}</span>
+                        <Phone className="h-4 w-4 text-white/40" />
+                        <span className="text-white">{supplier.phone}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-900">{supplier.email}</span>
+                        <Mail className="h-4 w-4 text-white/40" />
+                        <span className="text-white">{supplier.email}</span>
                       </div>
                     </div>
                   </td>
 
-                  <td className="table-cell">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-left">
-                      <p className="font-semibold text-primary-600">
+                      <p className="font-semibold text-blue-400">
                         {formatCurrency(supplier.financials?.totalPurchased || 0)}
                       </p>
-                      <p className="text-xs text-gray-500">Total purchases</p>
+                      <p className="text-xs text-white/60">Total purchases</p>
                     </div>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-left">
                       <p className={`font-semibold ${
-                        calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name) > 0 ? 'text-warning-600' : 'text-success-600'
+                        calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name) > 0 ? 'text-amber-400' : 'text-emerald-400'
                       }`}>
                         {formatCurrency(calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name))}
                       </p>
-                      <p className="text-xs text-gray-500">Outstanding</p>
+                      <p className="text-xs text-white/60">Outstanding</p>
                     </div>
                   </td>
-                  <td className="table-cell">
-                    <span className={`badge ${
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${
                       getPaymentStatus(
                         calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name),
                         supplier.lastPurchaseDate,
                         supplier.paymentTerms
-                      ) === 'paid' ? 'badge-success' :
+                      ) === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
                       getPaymentStatus(
                         calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name),
                         supplier.lastPurchaseDate,
                         supplier.paymentTerms
-                      ) === 'current' ? 'badge-success' :
+                      ) === 'current' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
                       getPaymentStatus(
                         calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name),
                         supplier.lastPurchaseDate,
                         supplier.paymentTerms
-                      ) === 'due-soon' ? 'badge-warning' : 'badge-danger'
+                      ) === 'due-soon' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'
                     }`}>
                       {getPaymentStatus(
                         calculateSupplierPayables(purchaseInvoicesData?.invoices || [], supplier.name),
@@ -347,17 +364,17 @@ const Suppliers = () => {
                       )}
                     </span>
                   </td>
-                  <td className="table-cell">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <button
                         onClick={() => handleEdit(supplier)}
-                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
+                        className="p-2 text-blue-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(supplier._id)}
-                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors duration-200"
+                        className="p-2 text-red-400 hover:bg-white/10 rounded-lg transition-colors duration-200"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -371,18 +388,18 @@ const Suppliers = () => {
         
         {suppliersData?.suppliers?.length === 0 && (
           <div className="text-center py-12">
-            <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Truck className="h-6 w-6 text-gray-400" />
+            <div className="h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{background: 'rgba(59, 130, 246, 0.2)'}}>
+              <Truck className="h-6 w-6 text-blue-400" />
             </div>
-            <p className="text-gray-500">No suppliers found</p>
+            <p className="text-white/60">No suppliers found</p>
           </div>
         )}
       </div>
 
-      {/* Pagination */}
+       {/* Pagination */}
       {suppliersData?.pagination?.pages > 1 && (
         <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-white/60">
             Showing {((suppliersData.pagination.page - 1) * 15) + 1} to{' '}
             {Math.min(suppliersData.pagination.page * 15, suppliersData.pagination.total)} of{' '}
             {suppliersData.pagination.total} results
@@ -391,14 +408,16 @@ const Suppliers = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50"
+              className="px-3 py-1 border border-white/20 rounded-md disabled:opacity-50 text-white bg-white/10 backdrop-blur-sm disabled:text-white/30"
+              style={{ backdropFilter: 'blur(10px)' }}
             >
               Previous
             </button>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, suppliersData.pagination.pages))}
               disabled={currentPage === suppliersData.pagination.pages}
-              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50"
+              className="px-3 py-1 border border-white/20 rounded-md disabled:opacity-50 text-white bg-white/10 backdrop-blur-sm disabled:text-white/30"
+              style={{ backdropFilter: 'blur(10px)' }}
             >
               Next
             </button>
