@@ -29,14 +29,27 @@ const Header = ({ onMenuClick }) => {
 
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-soft sticky top-0 z-30">
-      <div className="max-w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-18">
+    <header 
+      className="sticky top-0 z-30 transition-all duration-300"
+      style={{
+        background: 'rgba(255, 255, 255, 0.03)',
+        backdropFilter: 'blur(20px) saturate(150%)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        margin: '10px',
+        borderRadius: '12px',
+        height: '72px'
+      }}
+    >
+      <div className="max-w-full px-6 sm:px-8 lg:px-10 h-full flex items-center justify-between">
+        <div className="flex items-center flex-1">
           {/* Left Section - Menu & Search */}
           <div className="flex items-center flex-1">
             <button
               onClick={onMenuClick}
-              className="p-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 lg:hidden transition-all duration-200"
+              className="p-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 lg:hidden transition-all duration-200"
+              style={{
+                backdropFilter: 'blur(10px)'
+              }}
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -50,7 +63,11 @@ const Header = ({ onMenuClick }) => {
             <div className="relative" ref={notificationRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200"
+                className="relative p-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+                style={{
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid transparent'
+                }}
               >
                 <Bell className="h-5 w-5" />
                 {notificationCount > 0 && (
@@ -60,14 +77,23 @@ const Header = ({ onMenuClick }) => {
                 )}
               </button>
 
-              {/* Notifications Dropdown */}
+               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-strong border border-gray-100 overflow-hidden animate-slide-up">
-                  <div className="p-4 border-b border-gray-100">
+                <div 
+                  className="absolute right-0 mt-2 w-80 overflow-hidden animate-slide-up"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(20px) saturate(150%)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  <div className="p-4" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
-                    <div className="p-4 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <div className="p-4 hover:bg-white/10 cursor-pointer transition-colors">
                       <div className="flex items-start space-x-3">
                         <div className="h-2 w-2 bg-primary-500 rounded-full mt-2"></div>
                         <div className="flex-1">
@@ -77,7 +103,7 @@ const Header = ({ onMenuClick }) => {
                         </div>
                       </div>
                     </div>
-                    <div className="p-4 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <div className="p-4 hover:bg-white/10 cursor-pointer transition-colors">
                       <div className="flex items-start space-x-3">
                         <div className="h-2 w-2 bg-success-500 rounded-full mt-2"></div>
                         <div className="flex-1">
@@ -96,39 +122,62 @@ const Header = ({ onMenuClick }) => {
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
+                className="flex items-center space-x-3 p-3 rounded-xl hover:bg-white/10 transition-all duration-200"
+                style={{
+                  backdropFilter: 'blur(10px)'
+                }}
               >
                 <div className="text-right hidden sm:block">
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div 
+                    className="text-sm font-semibold text-white"
+                    style={{
+                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                    }}
+                  >
                     {user?.profile?.firstName || user?.username}
                   </div>
-                  <div className="text-xs text-gray-500 capitalize flex items-center">
+                  <div className="text-xs text-white/80 capitalize flex items-center">
                     {user?.role}
                     <ChevronDown className="h-3 w-3 ml-1" />
                   </div>
                 </div>
-                <div className="h-10 w-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-soft">
+                <div 
+                  className="h-10 w-10 rounded-xl flex items-center justify-center text-white font-semibold relative"
+                  style={{
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.1)'
+                  }}
+                >
                   {user?.profile?.firstName?.[0] || user?.username?.[0]?.toUpperCase()}
                 </div>
               </button>
 
               {/* User Dropdown */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-strong border border-gray-100 overflow-hidden animate-slide-up">
-                  <div className="p-4 border-b border-gray-100">
+                <div 
+                  className="absolute right-0 mt-2 w-56 overflow-hidden animate-slide-up"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(20px) saturate(150%)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  <div className="p-4" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                     <p className="text-sm font-semibold text-gray-900">
                       {user?.profile?.firstName || user?.username}
                     </p>
                     <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                   </div>
                   <div className="py-2">
-                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors">
+                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-white/10 flex items-center space-x-3 transition-colors rounded-lg">
                       <Settings className="h-4 w-4" />
                       <span>Settings</span>
                     </button>
                     <button
                       onClick={logout}
-                      className="w-full px-4 py-2 text-left text-sm text-danger-600 hover:bg-danger-50 flex items-center space-x-3 transition-colors"
+                      className="w-full px-4 py-2 text-left text-sm text-danger-600 hover:bg-danger-50 flex items-center space-x-3 transition-colors rounded-lg"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Logout</span>
