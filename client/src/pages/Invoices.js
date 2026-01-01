@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Fragment } from 'react';
-import { FileText, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Plus, Edit, Download, X, Receipt, ShoppingCart, Printer } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Plus, Edit, Download, X, Receipt, ShoppingCart } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -216,39 +216,7 @@ const Invoices = () => {
     downloadPDFMutation.mutate(invoiceId);
   };
 
-  const handlePrintInvoice = (invoice) => {
-    // Create a simple printable version
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice ${invoice.invoiceNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .invoice-info { margin-bottom: 30px; }
-            .item { margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; }
-            .total { font-weight: bold; margin-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Invoice #${invoice.invoiceNumber}</h1>
-            <p>Date: ${new Date(invoice.date).toLocaleDateString()}</p>
-            <p>Type: ${invoice.type}</p>
-          </div>
-          <div class="invoice-info">
-            <p>${activeTab === 'sales' || activeTab === 'quick' ? 'Customer' : 'Supplier'}: ${activeTab === 'sales' || activeTab === 'quick' ? invoice.customer?.name : invoice.supplier?.name}</p>
-            <p>Total: ৳${(invoice.total || 0).toLocaleString()}</p>
-            <p>Paid: ৳${(invoice.amountPaid || invoice.paid || 0).toLocaleString()}</p>
-            <p class="total">Due: ৳${(invoice.amountDue || Math.max(0, (invoice.total || 0) - (invoice.amountPaid || invoice.paid || 0))).toLocaleString()}</p>
-          </div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-  };
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -723,13 +691,6 @@ const Invoices = () => {
                             title="Download PDF"
                           >
                             <Download className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handlePrintInvoice(invoice)}
-                            className="text-blue-400 hover:text-blue-300"
-                            title="Print Invoice"
-                          >
-                            <Printer className="h-4 w-4" />
                           </button>
                       </div>
                     </td>
