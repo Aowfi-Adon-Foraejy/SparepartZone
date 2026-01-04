@@ -259,11 +259,13 @@ router.put('/:id', adminOrStaff, [
           req.user._id,
           'Stock level updated'
         );
+      } else {
+        if (stock.reorderThreshold !== undefined) product.stock.reorderThreshold = stock.reorderThreshold;
+        if (stock.minStock !== undefined) product.stock.minStock = stock.minStock;
       }
-      if (stock.reorderThreshold !== undefined) product.stock.reorderThreshold = stock.reorderThreshold;
-      if (stock.minStock !== undefined) product.stock.minStock = stock.minStock;
     }
 
+    await product.save();
     await req.user.updateActivity('inventory');
 
     const updatedProduct = await Product.findById(product._id)
