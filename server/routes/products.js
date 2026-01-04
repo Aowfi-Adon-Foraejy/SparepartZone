@@ -103,7 +103,7 @@ router.get('/', adminOrStaff, [
     if (category) filters.category = category;
     if (brand) filters.brand = brand;
     if (lowStock === 'true') {
-      filters['stock.current'] = { $lte: '$stock.reorderThreshold' };
+      filters['stock.current'] = { $lte: 10 }; // Default threshold
     }
     
     switch (status) {
@@ -194,6 +194,170 @@ router.get('/categories', adminOrStaff, async (req, res) => {
   } catch (error) {
     console.error('Categories fetch error:', error);
     res.status(500).json({ message: 'Server error while fetching categories' });
+  }
+});
+
+router.get('/analytics/sales', adminOrStaff, async (req, res) => {
+  try {
+    const Invoice = require('../models/Invoice');
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    console.log('Starting sales analytics aggregation...');
+
+    // First, let's try a simpler approach to get sales data
+    let salesData = [];
+    let mostSold = [];
+    let debugInfo = {};
+
+    try {
+      // Get sales invoices with items
+      const salesInvoices = await Invoice.find({
+        type: { $in: ['sale', 'quick'] },
+        date: { $gte: thirtyDaysAgo }
+      }).populate('items.product', 'name sku brand category stock sellingPrice isActive');
+
+      debugInfo.foundInvoices = salesInvoices.length;
+      console.log(`Found ${salesInvoices.length} sales invoices`);
+
+      // Manual aggregation to avoid complex pipeline issues
+      const productSales = {};
+      
+      salesInvoices.forEach(invoice => {
+        if (invoice.items && Array.isArray(invoice.items)) {
+          invoice.items.forEach(item => {
+            if (item.product && item.product.isActive) {
+              const productId = item.product._id.toString();
+              if (!productSales[productId]) {
+                productSales[productId] = {
+                  _id: item.product._id,
+                  productName: item.product.name,
+                  sku: item.product.sku,
+                  brand: item.product.brand,
+                  category: item.product.category,
+                  stock: item.product.stock,
+                  sellingPrice: item.product.sellingPrice,
+                  totalSold: 0,
+                  totalRevenue: 0,
+                  transactionCount: 0
+                };
+              }
+              productSales[productId].totalSold += item.quantity;
+              productSales[productId].totalRevenue += item.totalPrice || (item.quantity * item.unitPrice);
+              productSales[productId].transactionCount += 1;
+            }
+          });
+        }
+      });
+
+      salesData = Object.values(productSales);
+      salesData.sort((a, b) => b.totalSold - a.totalSold);
+      
+      debugInfo.soldProductsCount = salesData.length;
+      debugInfo.hasSalesData = salesData.length > 0;
+      
+      console.log(`Processed sales data for ${salesData.length} products`);
+      
+      mostSold = salesData.slice(0, 10);
+
+    } catch (error) {
+      console.error('Error processing sales data:', error);
+      debugInfo.salesError = error.message;
+    }
+
+    // Get slow moving products
+    let slowMoving = [];
+    try {
+      const soldProductIds = new Set(salesData.map(item => item._id.toString()));
+      
+      slowMoving = await Product.find({
+        isActive: true,
+        isArchived: false,
+        _id: { $nin: Array.from(soldProductIds) }
+      })
+      .select('name sku brand category stock sellingPrice createdAt lastRestocked')
+      .sort({ createdAt: 1 })
+      .limit(10)
+      .lean();
+
+      // Calculate days since creation/restock
+      slowMoving = slowMoving.map(product => {
+        const daysSince = Math.floor(
+          (Date.now() - (product.lastRestocked || product.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        return {
+          ...product,
+          totalSold: 0,
+          totalRevenue: 0,
+          daysSinceLastRestock: daysSince
+        };
+      });
+
+      debugInfo.slowMovingCount = slowMoving.length;
+
+    } catch (error) {
+      console.error('Error getting slow moving products:', error);
+      debugInfo.slowMovingError = error.message;
+    }
+
+    // Fallback: if no sales data, get top products by stock
+    if (mostSold.length === 0) {
+      try {
+        const topProducts = await Product.find({
+          isActive: true,
+          isArchived: false
+        })
+        .select('name sku brand category stock sellingPrice')
+        .sort({ 'stock.current': -1 })
+        .limit(10)
+        .lean();
+
+        mostSold = topProducts.map(product => ({
+          _id: product._id,
+          productName: product.name,
+          sku: product.sku,
+          brand: product.brand,
+          category: product.category,
+          stock: product.stock,
+          sellingPrice: product.sellingPrice,
+          totalSold: 0,
+          totalRevenue: 0,
+          transactionCount: 0,
+          isActive: true
+        }));
+
+        debugInfo.fallbackUsed = true;
+        debugInfo.fallbackReason = 'No sales data found';
+
+      } catch (error) {
+        console.error('Error getting fallback products:', error);
+        debugInfo.fallbackError = error.message;
+        mostSold = [];
+      }
+    }
+
+    const response = {
+      mostSold,
+      slowMoving,
+      period: 'Last 30 days',
+      generatedAt: new Date(),
+      debug: debugInfo
+    };
+
+    console.log('Analytics response prepared:', {
+      mostSoldCount: mostSold.length,
+      slowMovingCount: slowMoving.length,
+      hasData: mostSold.length > 0 || slowMoving.length > 0
+    });
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Sales analytics error:', error);
+    res.status(500).json({ 
+      message: 'Server error while fetching sales analytics',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -424,6 +588,58 @@ router.get('/:id/activity', adminOrStaff, [
   } catch (error) {
     console.error('Activity log fetch error:', error);
     res.status(500).json({ message: 'Server error while fetching activity log' });
+  }
+});
+
+// Debug endpoint to check available data
+router.get('/debug/data', adminOrStaff, async (req, res) => {
+  try {
+    const Invoice = require('../models/Invoice');
+    const Product = require('../models/Product');
+    
+    const invoiceCount = await Invoice.countDocuments();
+    const productCount = await Product.countDocuments();
+    
+    // Get all invoices for debugging
+    const allInvoices = await Invoice.find({
+      type: { $in: ['sale', 'quick'] }
+    }).limit(10);
+    
+    const recentInvoices = await Invoice.find({
+      type: { $in: ['sale', 'quick'] },
+      date: { $gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }
+    }).limit(5);
+    
+    const products = await Product.find().limit(5);
+    
+    res.json({
+      invoiceCount,
+      productCount,
+      allInvoicesCount: allInvoices.length,
+      recentInvoicesCount: recentInvoices.length,
+      allInvoices: allInvoices.map(inv => ({
+        invoiceNumber: inv.invoiceNumber,
+        type: inv.type,
+        date: inv.date,
+        status: inv.status,
+        itemCount: inv.items?.length || 0
+      })),
+      recentInvoices: recentInvoices.map(inv => ({
+        invoiceNumber: inv.invoiceNumber,
+        type: inv.type,
+        date: inv.date,
+        status: inv.status,
+        itemCount: inv.items?.length || 0
+      })),
+      products: products.map(p => ({
+        name: p.name,
+        sku: p.sku,
+        stock: p.stock?.current || 0
+      }))
+    });
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({ message: 'Debug error' });
   }
 });
 
