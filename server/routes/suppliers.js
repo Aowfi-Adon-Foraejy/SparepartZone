@@ -139,4 +139,97 @@ router.get('/overdue', adminOrStaff, async (req, res) => {
   }
 });
 
+router.put('/:id', adminOrStaff, [
+  body('name').optional().notEmpty().withMessage('Supplier name cannot be empty'),
+  body('phone').optional().notEmpty().withMessage('Phone cannot be empty'),
+  body('email').optional().isEmail().withMessage('Please provide a valid email'),
+  body('categories').optional().isArray().withMessage('Categories must be an array'),
+  body('paymentTerms').optional().isIn(['immediate', 'net15', 'net30', 'net60', 'net90']).withMessage('Invalid payment terms'),
+  body('creditLimit').optional().isNumeric({ min: 0 }).withMessage('Credit limit must be positive')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const supplier = await Supplier.findById(req.params.id);
+    if (!supplier) {
+      return res.status(404).json({ message: 'Supplier not found' });
+    }
+
+    const {
+      name, email, phone, address, businessInfo, categories,
+      paymentTerms, creditLimit, bankDetails, notes, contactPerson
+    } = req.body;
+
+    if (email && email !== supplier.email) {
+      const existingSupplier = await Supplier.findOne({ 
+        email, 
+        _id: { $ne: supplier._id } 
+      });
+      
+      if (existingSupplier) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    }
+
+    if (phone && phone !== supplier.phone) {
+      const existingSupplier = await Supplier.findOne({ 
+        phone, 
+        _id: { $ne: supplier._id } 
+      });
+      
+      if (existingSupplier) {
+        return res.status(400).json({ message: 'Phone number already exists' });
+      }
+    }
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phone) updateData.phone = phone;
+    if (address) updateData.address = { ...supplier.address, ...address };
+    if (businessInfo) updateData.businessInfo = { ...supplier.businessInfo, ...businessInfo };
+    if (contactPerson) updateData.contactPerson = { ...supplier.contactPerson, ...contactPerson };
+    if (categories) updateData.categories = categories;
+    if (paymentTerms) updateData.paymentTerms = paymentTerms;
+    if (creditLimit !== undefined) updateData.creditLimit = creditLimit;
+    if (bankDetails) updateData.bankDetails = { ...supplier.bankDetails, ...bankDetails };
+    if (notes !== undefined) updateData.notes = notes;
+
+    const updatedSupplier = await Supplier.findByIdAndUpdate(
+      supplier._id,
+      { $set: updateData },
+      { new: true }
+    ).populate('createdBy', 'username');
+
+    res.json({
+      message: 'Supplier updated successfully',
+      supplier: updatedSupplier
+    });
+  } catch (error) {
+    console.error('Supplier update error:', error.message);
+    console.error('Full error:', error);
+    res.status(500).json({ message: 'Server error during supplier update', error: error.message });
+  }
+});
+
+router.delete('/:id', adminOrStaff, async (req, res) => {
+  try {
+    const supplier = await Supplier.findById(req.params.id);
+    if (!supplier) {
+      return res.status(404).json({ message: 'Supplier not found' });
+    }
+
+    await Supplier.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Supplier deleted successfully' });
+  } catch (error) {
+    console.error('Supplier deletion error:', error);
+    res.status(500).json({ message: 'Server error during supplier deletion' });
+  }
+});
+
 module.exports = router;

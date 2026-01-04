@@ -27,9 +27,14 @@ router.post('/', adminOrStaff, [
       creditLimit, paymentTerms, creditDays, notes
     } = req.body;
 
-    const existingCustomer = await Customer.findOne({
-      $or: [{ phone }, { email: email }]
-    });
+    const existingCustomerQuery = { phone };
+    if (email) {
+      existingCustomerQuery.$or = [{ phone }, { email }];
+    } else {
+      existingCustomerQuery.phone = phone;
+    }
+    
+    const existingCustomer = await Customer.findOne(existingCustomerQuery);
 
     if (existingCustomer) {
       return res.status(400).json({ message: 'Customer with this phone or email already exists' });
@@ -353,6 +358,22 @@ router.post('/:id/unblacklist', adminOrStaff, async (req, res) => {
   } catch (error) {
     console.error('Customer unblacklist error:', error);
     res.status(500).json({ message: 'Server error during customer unblacklist' });
+  }
+});
+
+router.delete('/:id', adminOrStaff, async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    await Customer.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Customer deleted successfully' });
+  } catch (error) {
+    console.error('Customer deletion error:', error);
+    res.status(500).json({ message: 'Server error during customer deletion' });
   }
 });
 
